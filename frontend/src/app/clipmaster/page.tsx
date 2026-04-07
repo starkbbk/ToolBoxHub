@@ -33,10 +33,12 @@ export default function ClipMasterPage() {
       let projectId: number;
 
       if (file) {
-        const response = await clipmaster.upload(file);
+        const response = await clipmaster.upload(file) as any;
+        if (!response?.data?.project_id) throw new Error(response?.message || "Upload failed");
         projectId = response.data.project_id;
       } else {
-        const response = await clipmaster.processUrl(url);
+        const response = await clipmaster.processUrl(url) as any;
+        if (!response?.data?.project_id) throw new Error(response?.message || "Failed to process URL");
         projectId = response.data.project_id;
       }
 
