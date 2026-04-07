@@ -1,0 +1,1202 @@
+
+
+```
+Build a complete full-stack web application called "ToolboxHub" — 
+a multi-tool website where the FIRST tool is "ClipMaster" 
+(AI-powered video timestamp extractor). The architecture must 
+support adding more tools later (PDF converter, image tools, etc.) 
+as separate modules.
+
+=====================================================
+PROJECT OVERVIEW
+=====================================================
+This is a MULTI-TOOL WEBSITE like a Swiss Army knife of online tools.
+
+TOOL 1 — ClipMaster:
+Users upload long-form videos (or paste YouTube URLs). The app:
+1. Extracts audio from video using FFmpeg
+2. Transcribes audio locally using faster-whisper (free, offline)
+3. Sends transcript to Qwen 3.6 Plus (free) via OpenRouter API
+4. AI identifies all clip-worthy moments with timestamps
+5. User sees a dashboard with video player + suggested clips
+6. User can preview, edit, approve, and export clips
+
+FUTURE TOOLS (just create placeholder routes/pages for now):
+- Tool 2: PDF Converter
+- Tool 3: Image Compressor
+- Tool 4: Audio Transcriber
+- Tool 5: Text Summarizer
+
+=====================================================
+TECH STACK (STRICT — DO NOT CHANGE)
+=====================================================
+BACKEND:
+- Python 3.11+
+- FastAPI (with uvicorn)
+- faster-whisper (local Whisper model for transcription)
+- FFmpeg (via subprocess for audio extraction)
+- yt-dlp (for YouTube video downloads)
+- SQLite via SQLAlchemy (database)
+- python-multipart (file uploads)
+- websockets (real-time progress updates)
+- httpx (for OpenRouter API calls)
+- python-dotenv (env variables)
+
+FRONTEND:
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- ShadCN UI components
+- Zustand (state management)
+- React Player (video playback)
+- Axios (API calls)
+- Socket.io client (progress updates)
+- react-dropzone (file uploads)
+- lucide-react (icons)
+- sonner (toast notifications)
+- date-fns (date formatting)
+
+=====================================================
+MASTER FOLDER STRUCTURE
+=====================================================
+
+toolbox-hub/
+├── backend/
+│   ├── main.py                          # Master FastAPI app - registers ALL tool routers
+│   ├── requirements.txt                 # All Python dependencies
+│   ├── .env                             # All environment variables
+│   ├── config.py                        # Global config + per-tool configs
+│   ├── database.py                      # SQLAlchemy engine + session + table creation
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── base.py                      # SQLAlchemy DeclarativeBase
+│   │
+│   ├── shared/                          # Shared utilities for ALL tools
+│   │   ├── __init__.py
+│   │   ├── file_utils.py               # File operations (uuid, extension, size, cleanup)
+│   │   └── response.py                 # Standardized API response format
+│   │
+│   ├── tools/                           # EACH TOOL IS A SELF-CONTAINED MODULE
+│   │   ├── __init__.py
+│   │   │
+│   │   ├── clipmaster/                  # ===== TOOL 1: ClipMaster =====
+│   │   │   ├── __init__.py              # Tool metadata (name, slug, version)
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── project.py           # Project SQLAlchemy model
+│   │   │   │   ├── clip.py              # Clip SQLAlchemy model
+│   │   │   │   ├── transcript.py        # Transcript SQLAlchemy model
+│   │   │   │   └── rubric.py            # Rubric SQLAlchemy model
+│   │   │   ├── schemas/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── project.py           # Project Pydantic schemas (Create, Update, Response)
+│   │   │   │   ├── clip.py              # Clip Pydantic schemas
+│   │   │   │   └── rubric.py            # Rubric Pydantic schemas
+│   │   │   ├── routers/
+│   │   │   │   ├── __init__.py          # Combines all clipmaster routers
+│   │   │   │   ├── upload.py            # POST /api/clipmaster/upload, POST /api/clipmaster/process-url
+│   │   │   │   ├── process.py           # POST /api/clipmaster/process/{id}, GET status
+│   │   │   │   ├── clips.py             # CRUD for clips
+│   │   │   │   ├── export.py            # Export CSV/JSON/SRT
+│   │   │   │   └── rubrics.py           # CRUD for rubrics
+│   │   │   ├── services/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── video_processor.py   # FFmpeg audio extraction
+│   │   │   │   ├── youtube_downloader.py # yt-dlp integration
+│   │   │   │   ├── transcriber.py       # faster-whisper transcription
+│   │   │   │   ├── ai_analyzer.py       # OpenRouter Qwen 3.6 Plus API
+│   │   │   │   ├── clip_exporter.py     # CSV/JSON/SRT export
+│   │   │   │   └── progress_manager.py  # WebSocket progress updates
+│   │   │   └── utils/
+│   │   │       ├── __init__.py
+│   │   │       ├── time_formatter.py    # HH:MM:SS conversions
+│   │   │       └── file_manager.py      # ClipMaster specific file ops
+│   │   │
+│   │   ├── pdf_converter/              # ===== TOOL 2: Placeholder =====
+│   │   │   ├── __init__.py
+│   │   │   └── routers/
+│   │   │       ├── __init__.py
+│   │   │       └── placeholder.py       # GET /api/pdf-converter/status → "Coming Soon"
+│   │   │
+│   │   ├── image_compressor/           # ===== TOOL 3: Placeholder =====
+│   │   │   ├── __init__.py
+│   │   │   └── routers/
+│   │   │       ├── __init__.py
+│   │   │       └── placeholder.py
+│   │   │
+│   │   ├── audio_transcriber/          # ===== TOOL 4: Placeholder =====
+│   │   │   ├── __init__.py
+│   │   │   └── routers/
+│   │   │       ├── __init__.py
+│   │   │       └── placeholder.py
+│   │   │
+│   │   └── text_summarizer/            # ===== TOOL 5: Placeholder =====
+│   │       ├── __init__.py
+│   │       └── routers/
+│   │           ├── __init__.py
+│   │           └── placeholder.py
+│   │
+│   └── uploads/
+│       ├── clipmaster/
+│       ├── pdf_converter/
+│       ├── image_compressor/
+│       └── .gitkeep
+│
+├── frontend/
+│   ├── package.json
+│   ├── next.config.js
+│   ├── tailwind.config.ts
+│   ├── tsconfig.json
+│   ├── .env.local
+│   ├── components.json                  # ShadCN config
+│   ├── public/
+│   │   ├── logo.svg
+│   │   └── tools/                       # Tool icons
+│   │       ├── clipmaster.svg
+│   │       ├── pdf-converter.svg
+│   │       ├── image-compressor.svg
+│   │       ├── audio-transcriber.svg
+│   │       └── text-summarizer.svg
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── layout.tsx               # Master layout (Navbar + dark mode)
+│   │   │   ├── page.tsx                 # HOMEPAGE — Tool hub grid
+│   │   │   ├── globals.css              # Global styles + ShadCN theme
+│   │   │   │
+│   │   │   ├── clipmaster/              # ===== TOOL 1 PAGES =====
+│   │   │   │   ├── page.tsx             # ClipMaster landing/upload page
+│   │   │   │   ├── layout.tsx           # ClipMaster specific layout
+│   │   │   │   ├── processing/
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       └── page.tsx     # Processing progress page
+│   │   │   │   ├── dashboard/
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       └── page.tsx     # Main dashboard (player + clips)
+│   │   │   │   ├── history/
+│   │   │   │   │   └── page.tsx         # Past projects
+│   │   │   │   └── rubrics/
+│   │   │   │       └── page.tsx         # Rubric editor
+│   │   │   │
+│   │   │   ├── pdf-converter/           # ===== TOOL 2 PAGE =====
+│   │   │   │   └── page.tsx             # "Coming Soon" page
+│   │   │   │
+│   │   │   ├── image-compressor/        # ===== TOOL 3 PAGE =====
+│   │   │   │   └── page.tsx             # "Coming Soon" page
+│   │   │   │
+│   │   │   ├── audio-transcriber/       # ===== TOOL 4 PAGE =====
+│   │   │   │   └── page.tsx             # "Coming Soon" page
+│   │   │   │
+│   │   │   └── text-summarizer/         # ===== TOOL 5 PAGE =====
+│   │   │       └── page.tsx             # "Coming Soon" page
+│   │   │
+│   │   ├── components/
+│   │   │   ├── ui/                      # ShadCN UI components (auto-generated)
+│   │   │   │
+│   │   │   ├── shared/                  # SHARED components across all tools
+│   │   │   │   ├── Navbar.tsx           # Top nav: Logo + tool links + theme
+│   │   │   │   ├── Footer.tsx           # Footer with credits
+│   │   │   │   ├── ToolCard.tsx         # Card for each tool on homepage
+│   │   │   │   ├── ComingSoon.tsx       # Reusable "Coming Soon" component
+│   │   │   │   └── PageHeader.tsx       # Reusable page header
+│   │   │   │
+│   │   │   └── clipmaster/              # ClipMaster specific components
+│   │   │       ├── VideoPlayer.tsx      # React Player wrapper with controls
+│   │   │       ├── ClipCard.tsx         # Individual clip suggestion card
+│   │   │       ├── ClipList.tsx         # Scrollable list of clip cards
+│   │   │       ├── Timeline.tsx         # Visual timeline with clip markers
+│   │   │       ├── UploadZone.tsx       # Drag & drop video upload
+│   │   │       ├── URLInput.tsx         # YouTube URL paste input
+│   │   │       ├── ProgressBar.tsx      # Multi-step processing progress
+│   │   │       ├── FilterBar.tsx        # Category filter + sort + search
+│   │   │       ├── ExportModal.tsx      # Export options modal
+│   │   │       ├── RubricEditor.tsx     # Custom rubric create/edit form
+│   │   │       ├── RubricSelector.tsx   # Dropdown to select rubric
+│   │   │       └── ConfidenceSlider.tsx # Confidence threshold slider
+│   │   │
+│   │   ├── stores/
+│   │   │   ├── useProjectStore.ts       # ClipMaster project state (Zustand)
+│   │   │   └── useClipStore.ts          # ClipMaster clips state (Zustand)
+│   │   │
+│   │   ├── hooks/
+│   │   │   ├── useWebSocket.ts          # WebSocket connection hook
+│   │   │   └── useKeyboard.ts           # Keyboard shortcuts hook
+│   │   │
+│   │   ├── lib/
+│   │   │   ├── api.ts                   # Axios instance + all API functions
+│   │   │   ├── utils.ts                 # Helper functions (cn, formatTime, etc.)
+│   │   │   └── types.ts                 # ALL TypeScript interfaces
+│   │   │
+│   │   └── constants/
+│   │       ├── index.ts                 # App-wide constants
+│   │       └── tools.ts                 # Tool registry (name, icon, route, status)
+│   │
+│   └── .gitignore
+│
+├── docker-compose.yml
+├── README.md
+└── .gitignore
+
+=====================================================
+DATABASE SCHEMA (SQLAlchemy Models)
+=====================================================
+
+Table: projects
+- id: Integer, Primary Key, Auto Increment
+- title: String(255), NOT NULL
+- source_type: String(20) — "upload" or "youtube"
+- source_url: String(500), nullable
+- file_path: String(500), nullable
+- audio_path: String(500), nullable
+- duration_seconds: Float, nullable
+- status: String(20) — "uploading", "extracting_audio", 
+  "transcribing", "analyzing", "completed", "failed"
+- error_message: Text, nullable
+- created_at: DateTime, default=utcnow
+- updated_at: DateTime, default=utcnow, onupdate=utcnow
+
+Table: transcripts
+- id: Integer, Primary Key, Auto Increment
+- project_id: Integer, ForeignKey("projects.id"), unique
+- full_text: Text, NOT NULL
+- segments: JSON — array of {start: "HH:MM:SS", end: "HH:MM:SS", text: string}
+- language: String(10)
+- word_count: Integer
+- created_at: DateTime, default=utcnow
+
+Table: clips
+- id: Integer, Primary Key, Auto Increment
+- project_id: Integer, ForeignKey("projects.id")
+- start_time: String(10) — "HH:MM:SS"
+- end_time: String(10) — "HH:MM:SS"
+- start_seconds: Float
+- end_seconds: Float
+- title: String(255)
+- category: String(50) — "highlight", "funny", "emotional", 
+  "key_point", "topic_change", "action_item", "quote"
+- confidence: Integer — 0 to 100
+- reason: Text
+- is_approved: Boolean, default=False
+- user_notes: Text, nullable
+- created_at: DateTime, default=utcnow
+
+Table: rubrics
+- id: Integer, Primary Key, Auto Increment
+- name: String(255)
+- description: Text, nullable
+- rules: JSON — array of rule strings
+- is_default: Boolean, default=False
+- created_at: DateTime, default=utcnow
+
+Relationships:
+- Project has one Transcript (one-to-one)
+- Project has many Clips (one-to-many, cascade delete)
+- Rubric is standalone (no FK)
+
+=====================================================
+BACKEND API ENDPOINTS (ALL)
+=====================================================
+
+### Health & Info
+GET  /api/health → {"status": "ok", "version": "1.0.0", "tools": [...]}
+GET  /api/tools  → List of all tools with status (active/coming_soon)
+
+### ClipMaster — Upload & Project
+POST   /api/clipmaster/upload          
+  - Accepts: multipart/form-data (file field: "video")
+  - Validates: file size (max 2GB), extension (.mp4,.mkv,.avi,.mov,.webm)
+  - Saves to: uploads/clipmaster/{uuid}/original.{ext}
+  - Creates project in DB with status="uploaded"
+  - Returns: { success, data: { project_id, title, status } }
+
+POST   /api/clipmaster/process-url     
+  - Accepts: { url: string }
+  - Validates YouTube URL format
+  - Uses yt-dlp to download video + extract title/duration
+  - Creates project in DB
+  - Returns: { success, data: { project_id, title, status } }
+
+GET    /api/clipmaster/projects
+  - Returns: list of all projects (id, title, status, clip_count, created_at)
+  - Query: ?limit=20&offset=0&status=completed
+
+GET    /api/clipmaster/project/{project_id}
+  - Returns: full project with transcript + clips
+
+DELETE /api/clipmaster/project/{project_id}
+  - Deletes project + transcript + clips + files from disk
+
+### ClipMaster — Processing Pipeline
+POST   /api/clipmaster/process/{project_id}
+  - Accepts: { rubric_id: optional int }
+  - Runs async background pipeline:
+    Step 1: Extract audio (FFmpeg → WAV 16kHz mono)
+    Step 2: Transcribe (faster-whisper large-v3)
+    Step 3: AI Analysis (Qwen 3.6 Plus via OpenRouter)
+    Step 4: Save clips to DB
+  - Each step updates project status + sends WebSocket progress
+  - Returns: { success, message: "Processing started" }
+
+GET    /api/clipmaster/project/{project_id}/status
+  - Returns: { status, progress_percent, current_step, message }
+
+### ClipMaster — Clips
+GET    /api/clipmaster/clips/{project_id}
+  - Query: ?category=funny&min_confidence=70&sort=time&search=keyword
+  - Returns: filtered/sorted array of clips
+
+PUT    /api/clipmaster/clip/{clip_id}
+  - Accepts: { start_time, end_time, title, category, is_approved, user_notes }
+  - Validates time format, recalculates start_seconds/end_seconds
+  - Returns: updated clip
+
+DELETE /api/clipmaster/clip/{clip_id}
+  - Hard delete clip
+  - Returns: { success, message }
+
+POST   /api/clipmaster/clips/{project_id}/approve-all
+  - Sets is_approved=True for all clips in project
+  - Returns: { success, count: N }
+
+POST   /api/clipmaster/clips/{project_id}/bulk-action
+  - Accepts: { clip_ids: int[], action: "approve" | "reject" | "delete" }
+  - Returns: { success, affected: N }
+
+### ClipMaster — Export
+POST   /api/clipmaster/export/{project_id}
+  - Accepts: { format: "csv" | "json" | "srt", only_approved: boolean }
+  - Returns: StreamingResponse with file download
+
+### ClipMaster — Rubrics
+GET    /api/clipmaster/rubrics
+  - Returns: all rubrics
+
+POST   /api/clipmaster/rubric
+  - Accepts: { name, description, rules: string[] }
+  - Returns: created rubric
+
+GET    /api/clipmaster/rubric/{rubric_id}
+  - Returns: single rubric
+
+PUT    /api/clipmaster/rubric/{rubric_id}
+  - Update rubric
+  - Returns: updated rubric
+
+DELETE /api/clipmaster/rubric/{rubric_id}
+  - Delete rubric
+
+### ClipMaster — WebSocket
+WS     /ws/clipmaster/progress/{project_id}
+  - Sends JSON messages:
+    { "step": "extracting_audio", "progress": 25, "message": "Extracting audio from video..." }
+    { "step": "transcribing", "progress": 50, "message": "Transcribing audio (3:45 / 12:30)..." }
+    { "step": "analyzing", "progress": 80, "message": "AI analyzing transcript chunk 2/3..." }
+    { "step": "completed", "progress": 100, "message": "Done! Found 15 clips." }
+    { "step": "failed", "progress": 0, "message": "Error: FFmpeg not found" }
+
+### Placeholder Tools
+GET    /api/pdf-converter/status      → { "status": "coming_soon", "name": "PDF Converter" }
+GET    /api/image-compressor/status   → { "status": "coming_soon", "name": "Image Compressor" }
+GET    /api/audio-transcriber/status  → { "status": "coming_soon", "name": "Audio Transcriber" }
+GET    /api/text-summarizer/status    → { "status": "coming_soon", "name": "Text Summarizer" }
+
+=====================================================
+SERVICE IMPLEMENTATIONS (DETAILED CODE LOGIC)
+=====================================================
+
+### 1. video_processor.py
+```python
+Function: extract_audio(video_path: str, output_dir: str, progress_callback=None) -> str
+- Validate video_path exists
+- Build FFmpeg command:
+  ["ffmpeg", "-i", video_path, "-vn", "-acodec", "pcm_s16le", 
+   "-ar", "16000", "-ac", "1", "-y", output_path]
+- Run via subprocess.Popen with stdout/stderr capture
+- Parse FFmpeg progress output to estimate percentage
+- Call progress_callback(percent) periodically
+- On success: return audio .wav path
+- On failure: raise VideoProcessingError with FFmpeg stderr
+- Also: get_video_duration(video_path) -> float seconds
+  using ffprobe
+```
+
+### 2. youtube_downloader.py
+```python
+Function: download_video(url: str, output_dir: str, progress_callback=None) -> dict
+- Validate URL is a valid YouTube URL (regex check)
+- Configure yt-dlp options:
+  format: "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]"
+  outtmpl: output_dir + "/original.%(ext)s"
+  progress_hooks: [callback function]
+- Download using yt_dlp.YoutubeDL
+- Extract metadata: title, duration, thumbnail_url
+- Return: { file_path, title, duration, thumbnail_url }
+- Handle errors: private video, age-restricted, unavailable
+```
+
+### 3. transcriber.py
+```python
+- Module-level: lazy-load WhisperModel (singleton pattern)
+  model = None
+  def get_model():
+      global model
+      if model is None:
+          model = WhisperModel(settings.WHISPER_MODEL, 
+                               device=settings.WHISPER_DEVICE,
+                               compute_type=settings.WHISPER_COMPUTE_TYPE)
+      return model
+
+Function: transcribe(audio_path: str, language: str = None, 
+                     progress_callback=None) -> dict
+- Load model via get_model()
+- Run: segments, info = model.transcribe(
+    audio_path, beam_size=5, word_timestamps=True,
+    language=language, vad_filter=True, 
+    vad_parameters=dict(min_silence_duration_ms=500)
+  )
+- Iterate segments:
+  - Build full_text with timestamps: "[HH:MM:SS - HH:MM:SS] text\n"
+  - Build segments list: [{start: "HH:MM:SS", end: "HH:MM:SS", text: str}]
+  - Track progress: (segment.end / info.duration) * 100
+  - Call progress_callback(percent) every 5%
+- Return: {
+    full_text: str,
+    segments: list[dict],
+    language: info.language,
+    duration: info.duration,
+    word_count: int
+  }
+```
+
+### 4. ai_analyzer.py
+```python
+SYSTEM_PROMPT = """
+You are ClipMaster AI — a professional video editor and content strategist.
+Your job is to analyze video transcripts and identify ALL moments worth clipping.
+
+RULES:
+1. Identify: highlights, funny moments, emotional moments, key points, 
+   topic changes, quotable lines, action items
+2. Each clip should be 15 seconds to 3 minutes long
+3. Prefer natural breakpoints in conversation
+4. Assign confidence scores honestly (0-100):
+   - 90-100: Must-clip, incredibly strong moment
+   - 70-89: Very good clip, recommended
+   - 50-69: Decent clip, optional
+   - Below 50: Weak, only include if explicitly requested
+5. Provide clear 1-2 line reasons for each suggestion
+6. Never overlap clips unless absolutely necessary
+7. Cover the ENTIRE video — don't skip sections
+8. If the video is educational, focus on key takeaways
+9. If the video is entertainment, focus on funny/emotional peaks
+10. Return ONLY valid JSON — no markdown, no explanations outside JSON
+"""
+
+Function: analyze_transcript(transcript: str, rubric_rules: list[str] = None, 
+                            progress_callback=None) -> dict
+- Build user prompt:
+  f"""Analyze this video transcript and find ALL clip-worthy moments.
+  
+  {"CUSTOM RUBRIC RULES:" + chr(10) + chr(10).join(f"- {r}" for r in rubric_rules) if rubric_rules else ""}
+  
+  TRANSCRIPT:
+  {transcript}
+  
+  Return a JSON object with this EXACT structure:
+  {{
+    "clips": [
+      {{
+        "start_time": "HH:MM:SS",
+        "end_time": "HH:MM:SS", 
+        "title": "Short descriptive title (max 60 chars)",
+        "category": "highlight|funny|emotional|key_point|topic_change|action_item|quote",
+        "confidence": 85,
+        "reason": "Why this is clip-worthy (1-2 lines)"
+      }}
+    ],
+    "total_clips": 15,
+    "video_summary": "Brief 2-3 line video summary"
+  }}"""
+
+- For long transcripts (estimated tokens > 100K):
+  - Split transcript into 30-minute chunks based on timestamps
+  - Add 2-minute overlap between chunks
+  - Analyze each chunk separately
+  - Merge results: combine all clips, sort by start_time
+  - Remove duplicates: if two clips overlap by >80%, keep higher confidence
+  - progress_callback after each chunk
+
+- API call via httpx:
+  POST {OPENROUTER_BASE_URL}/chat/completions
+  Headers: Authorization: Bearer {API_KEY}, Content-Type: application/json
+  Body: {
+    model: "qwen/qwen3.6-plus:free",
+    messages: [{role: "system", content: SYSTEM_PROMPT}, 
+               {role: "user", content: user_prompt}],
+    temperature: 0.3,
+    max_tokens: 16000
+  }
+
+- Parse response: extract JSON from content
+  - Try json.loads() directly
+  - If fails: try extracting JSON from markdown code blocks
+  - If fails: regex extract {...} 
+  - If fails: raise AnalysisError
+
+- Validate each clip:
+  - start_time matches HH:MM:SS format
+  - end_time > start_time
+  - category is valid enum
+  - confidence is 0-100
+  - title is not empty
+
+- Retry logic: 3 attempts with exponential backoff (2s, 4s, 8s)
+- Return: { clips: list, total_clips: int, video_summary: str }
+```
+
+### 5. clip_exporter.py
+```python
+Function: export_csv(clips: list[Clip]) -> str (file path)
+- Columns: #, Start Time, End Time, Duration, Title, Category, 
+           Confidence, Reason, Approved, Notes
+- Use csv.writer
+- Return temp file path
+
+Function: export_json(clips: list[Clip]) -> str (file path)  
+- Format as pretty JSON array
+- Return temp file path
+
+Function: export_srt(clips: list[Clip]) -> str (file path)
+- SRT format:
+  1
+  00:12:30,000 --> 00:14:15,000
+  [Highlight] The moment guest reveals secret
+  
+  2
+  ...
+- Return temp file path
+```
+
+### 6. progress_manager.py
+```python
+- Class: ProgressManager
+  - connections: dict[int, list[WebSocket]] = {}
+  
+  async def connect(project_id: int, websocket: WebSocket)
+  async def disconnect(project_id: int, websocket: WebSocket)  
+  async def send_update(project_id: int, step: str, progress: int, message: str)
+    - Sends to ALL connected websockets for that project_id
+    - JSON: {"step": step, "progress": progress, "message": message, "timestamp": now}
+    - Handle broken connections gracefully (remove dead sockets)
+
+- Global instance: progress_manager = ProgressManager()
+```
+
+### 7. time_formatter.py  
+```python
+Function: seconds_to_timestamp(seconds: float) -> str
+  - Returns "HH:MM:SS"
+
+Function: timestamp_to_seconds(timestamp: str) -> float
+  - Parses "HH:MM:SS" → float seconds
+
+Function: format_duration(seconds: float) -> str
+  - Returns human readable: "1h 23m 45s" or "5m 30s" or "45s"
+```
+
+=====================================================
+FRONTEND PAGES (ULTRA DETAILED)
+=====================================================
+
+### HOMEPAGE (/) — Tool Hub
+LAYOUT:
+- Full dark background (#0a0a0a)
+- Navbar at top (shared across all pages)
+- Hero section:
+  - Large heading: "ToolboxHub" with gradient text (indigo to violet)
+  - Subheading: "Your All-in-One Online Tool Suite — Free & Fast"
+  - Subtle animated background (CSS gradient animation)
+
+- Tools Grid (3 columns on desktop, 2 tablet, 1 mobile):
+  Each TOOL CARD:
+  ┌──────────────────────────────┐
+  │  🎬 (tool icon - large)      │
+  │                              │
+  │  ClipMaster                  │
+  │  AI Video Clip Extractor     │
+  │                              │
+  │  "Extract timestamps from    │
+  │   long videos using AI"      │
+  │                              │
+  │  [🟢 Active] or [🔜 Coming]  │
+  │                              │
+  │  [Open Tool →]               │
+  └──────────────────────────────┘
+  
+  - Active tools: clickable, routes to tool page
+  - Coming Soon tools: dimmed, badge says "Coming Soon", 
+    click shows toast "This tool is coming soon!"
+  - Hover effect: slight scale up + border glow
+
+- Tools to show:
+  1. ClipMaster — 🎬 — Active — /clipmaster
+  2. PDF Converter — 📄 — Coming Soon — /pdf-converter  
+  3. Image Compressor — 🖼️ — Coming Soon — /image-compressor
+  4. Audio Transcriber — 🎙️ — Coming Soon — /audio-transcriber
+  5. Text Summarizer — 📝 — Coming Soon — /text-summarizer
+
+- Footer: "Built with ❤️ | © 2024 ToolboxHub"
+
+### NAVBAR (shared component)
+- Sticky top
+- Left: ToolboxHub logo + name (links to /)
+- Center: Tool links (Home, ClipMaster, More Tools dropdown)
+- Right: GitHub icon link (optional)
+- Background: #0a0a0a with backdrop blur
+- Border bottom: subtle #2a2a2a
+
+### ClipMaster — Upload Page (/clipmaster)
+LAYOUT:
+- Page header: "🎬 ClipMaster" + "AI-Powered Video Clip Extractor"
+- Breadcrumb: Home > ClipMaster
+
+MAIN CONTENT (centered, max-w-3xl):
+
+Section 1 — Upload Zone:
+- Large drag-and-drop area (300px height)
+  - Dashed border (#2a2a2a), rounded-xl
+  - Center: Cloud upload icon (lucide), 48px
+  - Text: "Drag & drop your video here"
+  - Subtext: "or click to browse files"
+  - Caption: "MP4, MKV, AVI, MOV, WEBM — Max 2GB"
+  - On drag over: border turns indigo, background subtle highlight
+  - On file selected: show file info card:
+    ┌──────────────────────────────┐
+    │ 🎥 my_video.mp4  (245 MB)   │
+    │                    [✕ Remove] │
+    └──────────────────────────────┘
+
+Section 2 — OR Divider:
+- Horizontal line with "OR" text in center bubble
+
+Section 3 — YouTube URL:
+- Input field with YouTube icon on left
+- Placeholder: "https://www.youtube.com/watch?v=..."
+- "Paste from clipboard" button on right
+- Validation: show green check for valid YouTube URL, 
+  red error for invalid
+
+Section 4 — Rubric Selection (collapsible):
+- "Advanced: Select Clipping Rubric" — click to expand
+- Dropdown: "Default (all categories)" + custom rubrics from API
+- "Create new rubric" text link → /clipmaster/rubrics
+
+Section 5 — Action Button:
+- Large full-width button:
+  "🚀 Extract Clips" — gradient indigo→violet
+- Disabled state: grayed out when no file/URL
+- Loading state: spinner + "Uploading..."
+- On click: 
+  1. If file: POST /api/clipmaster/upload → get project_id
+  2. If URL: POST /api/clipmaster/process-url → get project_id
+  3. Then: POST /api/clipmaster/process/{project_id}
+  4. Then: router.push(/clipmaster/processing/{project_id})
+
+Section 6 — Recent Projects:
+- "Recent Projects" heading
+- If no projects: "No projects yet. Upload a video to get started!"
+- Grid (2 columns) of recent projects:
+  ┌────────────────────────┐
+  │ 📹 Video Title         │
+  │ Status: ✅ Completed    │
+  │ 🎬 12 clips found      │
+  │ 📅 2 hours ago          │
+  │ [View Dashboard →]      │
+  └────────────────────────┘
+- Max 6 recent projects
+- "View All →" link to /clipmaster/history
+
+### ClipMaster — Processing Page (/clipmaster/processing/[id])
+LAYOUT:
+- Centered card (max-w-2xl), vertically centered on page
+- Card background: #1a1a1a, rounded-xl, subtle shadow
+
+CONTENT:
+- Title: project title from API
+- Subtitle: "Processing your video..."
+
+- Step Indicator (horizontal, 4 steps):
+  [📥 Upload] → [🎵 Audio] → [🎤 Transcribe] → [🤖 Analyze] → [✅ Done]
+  - Completed steps: indigo color + checkmark
+  - Current step: pulsing animation + spinner
+  - Pending steps: gray/dimmed
+  - Lines connecting steps: colored for completed, gray for pending
+
+- Progress Bar:
+  - Full width, rounded, height 8px
+  - Background: #2a2a2a
+  - Fill: gradient indigo→violet
+  - Animated width transition
+  - Percentage text above: "67%"
+
+- Status Message:
+  - Dynamic text: "Transcribing audio... 45% complete"
+  - Below: estimated time remaining (calculated from progress speed)
+
+- Log/Details (collapsible):
+  - "Show details" toggle
+  - Scrollable log of all WebSocket messages received
+  - Monospace font, small text
+
+- WebSocket Connection:
+  - Connect to: ws://localhost:8000/ws/clipmaster/progress/{id}
+  - On message: update step indicator, progress bar, status message
+  - On "completed": 
+    - Show success animation (green checkmark, confetti optional)
+    - Wait 2 seconds
+    - Auto-redirect to /clipmaster/dashboard/{id}
+  - On "failed":
+    - Show error message in red
+    - "Retry" button → POST /api/clipmaster/process/{id} again
+  - On disconnect: show "Connection lost, retrying..." + auto-reconnect
+
+### ClipMaster — Dashboard (/clipmaster/dashboard/[id])
+THIS IS THE MOST IMPORTANT PAGE. Build it perfectly.
+
+LAYOUT: Two-column (responsive → stacks on mobile)
+- Left: 60% width — Video Player + Timeline + Info
+- Right: 40% width — Controls + Clip List + Actions
+
+LEFT COLUMN:
+
+1. Video Player:
+   - React Player component
+   - Source: serve video from backend OR YouTube URL
+   - Controls: play/pause, seek bar, volume, playback speed (0.5x-2x), fullscreen
+   - Below player: current time display "00:12:35 / 01:45:00"
+   - Aspect ratio: 16:9, rounded corners
+   - On clip card click → player.seekTo(clip.start_seconds)
+   - Add endpoint to serve uploaded videos: 
+     GET /api/clipmaster/video/{project_id} → StreamingResponse
+
+2. Timeline Bar (below player):
+   - Horizontal bar, full width, height 40px
+   - Background: #2a2a2a
+   - Each clip shown as a colored segment:
+     - Position: (clip.start_seconds / total_duration) * 100%
+     - Width: (clip.duration / total_duration) * 100%
+     - Color: based on category (same as badge colors)
+     - Hover: tooltip with clip title + time range
+     - Click: seek video to that clip + highlight clip card
+   - Current playback position: thin white vertical line that moves
+
+3. Video Info Bar:
+   - Row: Title | Duration: 1h 23m | Clips: 15 | Language: English
+   - Small text, muted color
+
+RIGHT COLUMN:
+
+1. Controls Bar (sticky top of right column):
+   Row 1: Search input (magnifying glass icon, "Search clips...")
+   Row 2: Category filter chips (horizontally scrollable):
+     [All] [Highlight] [Funny] [Emotional] [Key Point] [Topic Change] [Quote] [Action Item]
+     - Active chip: filled indigo, others: outline
+     - Multiple selection supported
+   Row 3: Sort dropdown + Confidence slider
+     - Sort: "Sort by: Time ↑" dropdown (Time, Confidence, Category)
+     - Confidence: range slider 0-100, label "Min confidence: 70"
+   Row 4: Clip count "Showing 12 of 18 clips"
+
+2. Clip List (scrollable, flex-1):
+   Array of ClipCard components. Each card:
+   
+   ┌─────────────────────────────────────────────┐
+   │ #1  [Highlight] ← category badge   🟢 92%  │ ← confidence with color
+   │                                              │
+   │ "The moment guest reveals the secret"       │ ← clip title (bold)
+   │                                              │
+   │ ⏱️ 00:12:30 → 00:14:15  (1m 45s)           │ ← time range + duration
+   │                                              │
+   │ 💡 Guest shares a surprising revelation     │ ← reason (muted text)
+   │    about their early career struggles       │
+   │                                              │
+   │ [▶ Play] [✏️ Edit] [✅ Approve] [🗑️ Delete]│ ← action buttons
+   └─────────────────────────────────────────────┘
+   
+   Card states:
+   - Default: #1a1a1a background
+   - Playing (current): indigo left border (4px), slightly brighter bg
+   - Approved: green left border, subtle green tint
+   - Hover: slight background change
+   
+   Category badge colors:
+   - Highlight: bg-blue-500/20 text-blue-400
+   - Funny: bg-yellow-500/20 text-yellow-400
+   - Emotional: bg-purple-500/20 text-purple-400
+   - Key Point: bg-green-500/20 text-green-400
+   - Topic Change: bg-orange-500/20 text-orange-400
+   - Quote: bg-pink-500/20 text-pink-400
+   - Action Item: bg-red-500/20 text-red-400
+   
+   Confidence color:
+   - 90-100: green
+   - 70-89: blue
+   - 50-69: yellow
+   - Below 50: red
+   
+   Button actions:
+   - ▶ Play: seek video to clip.start_seconds, highlight this card,
+     auto-scroll this card into view
+   - ✏️ Edit: card expands to show edit form:
+     ┌─────────────────────────────────────┐
+     │ Start: [00:12:30] [-1s] [+1s]       │
+     │ End:   [00:14:15] [-1s] [+1s]       │
+     │ Title: [________________________]    │
+     │ Category: [Dropdown ▼]               │
+     │ Notes: [________________________]    │
+     │        [________________________]    │
+     │ [💾 Save]  [❌ Cancel]               │
+     └─────────────────────────────────────┘
+     - On save: PUT /api/clipmaster/clip/{id}, update local state
+   - ✅ Approve: toggle is_approved, PUT to API, show green state
+   - 🗑️ Delete: confirmation dialog "Delete this clip?", 
+     DELETE /api/clipmaster/clip/{id}, remove from list with animation
+
+   Active clip tracking:
+   - As video plays, check current time against clip ranges
+   - If currentTime falls within a clip range, highlight that card
+   - Auto-scroll clip list to keep active card visible
+
+3. Bottom Action Bar (sticky bottom of right column):
+   ┌─────────────────────────────────────────────┐
+   │ ☐ Select All  │ [✅ Approve All] [📤 Export]│
+   │                │ [🔄 Re-analyze]             │
+   └─────────────────────────────────────────────┘
+   
+   - Select All: checkbox, toggles all clips
+   - Approve All: POST /api/clipmaster/clips/{id}/approve-all
+   - Export: opens ExportModal
+   - Re-analyze: confirmation → POST /api/clipmaster/process/{id}
+     (deletes existing clips, re-runs AI analysis)
+
+EXPORT MODAL (ShadCN Dialog):
+   ┌─────────────────────────────────────┐
+   │ 📤 Export Clips              [✕]    │
+   │                                     │
+   │ Format:                             │
+   │ ○ CSV (Spreadsheet)                 │
+   │ ○ JSON (Data)                       │
+   │ ○ SRT (Subtitles)                   │
+   │                                     │
+   │ Scope:                              │
+   │ ○ All clips (18)                    │
+   │ ○ Approved only (12)               │
+   │                                     │
+   │ [📥 Download]  [📋 Copy to Clipboard]│
+   └─────────────────────────────────────┘
+
+KEYBOARD SHORTCUTS (always active on dashboard):
+- Space: play/pause video
+- Left Arrow: seek -5 seconds
+- Right Arrow: seek +5 seconds
+- Shift+Left: seek -30 seconds
+- Shift+Right: seek +30 seconds
+- A: approve current/selected clip
+- E: open edit for current clip
+- N: jump to next clip
+- P: jump to previous clip
+- ?: show keyboard shortcuts help modal
+
+### ClipMaster — History (/clipmaster/history)
+- Page header: "📂 Project History"
+- Search bar: "Search projects..."
+- Table (ShadCN DataTable):
+  Columns: Title | Source | Duration | Clips | Status | Date | Actions
+  - Source: "📤 Upload" or "🔗 YouTube" badge
+  - Status: colored badge (completed=green, processing=yellow, failed=red)
+  - Date: relative (e.g., "2 hours ago") using date-fns
+  - Actions: [View] [Delete] buttons
+  - Click row → navigate to /clipmaster/dashboard/{id}
+- Empty state: "No projects yet. Start by uploading a video!"
+- Pagination: 20 per page
+
+### ClipMaster — Rubrics (/clipmaster/rubrics)
+- Page header: "📋 Clipping Rubrics"
+- "Create New Rubric" button (top right)
+
+- Rubric Cards Grid (2 columns):
+  ┌──────────────────────────────┐
+  │ 📋 Interview Highlights      │
+  │                              │
+  │ "Focus on key interview      │
+  │  moments and revelations"    │
+  │                              │
+  │ Rules:                       │
+  │ • Find emotional moments     │
+  │ • Identify key revelations   │
+  │ • Capture funny reactions    │
+  │                              │
+  │ [✏️ Edit] [🗑️ Delete]       │
+  └──────────────────────────────┘
+
+- Create/Edit Form (ShadCN Dialog or inline):
+  - Name: text input (required)
+  - Description: textarea (optional)
+  - Rules: dynamic list
+    ┌─────────────────────────────────┐
+    │ Rule 1: [Find emotional moments____] [🗑️] │
+    │ Rule 2: [Identify key revelations__] [🗑️] │
+    │ Rule 3: [Capture funny reactions___] [🗑️] │
+    │ [+ Add Rule]                                │
+    └─────────────────────────────────────────────┘
+  - [Save Rubric] [Cancel] buttons
+
+### Coming Soon Pages (/pdf-converter, /image-compressor, etc.)
+- Reusable ComingSoon component:
+  - Tool icon (large, centered)
+  - Tool name
+  - "Coming Soon!" text with subtle animation
+  - "We're working hard to bring you this tool. Stay tuned!"
+  - [← Back to Tools] button → navigates to /
+  - Optional: email input "Get notified when it launches"
+
+=====================================================
+STYLING & DESIGN SYSTEM  
+=====================================================
+- Theme: Dark mode ONLY (no light mode toggle needed)
+- Background: #0a0a0a
+- Card/Surface: #1a1a1a  
+- Card hover: #222222
+- Border: #2a2a2a
+- Border hover: #3a3a3a
+- Primary: #6366f1 (indigo-500)
+- Primary hover: #4f46e5 (indigo-600)
+- Secondary: #8b5cf6 (violet-500)
+- Gradient: from #6366f1 to #8b5cf6 (for buttons/accents)
+- Success: #22c55e (green-500)
+- Warning: #eab308 (yellow-500)
+- Error: #ef4444 (red-500)
+- Info: #3b82f6 (blue-500)
+- Text primary: #ffffff
+- Text secondary: #a1a1aa (zinc-400)
+- Text muted: #71717a (zinc-500)
+- Font family: "Inter", system-ui, sans-serif
+- Border radius: 16px (cards), 12px (large buttons), 8px (small buttons/inputs)
+- Transition: all 200ms ease
+- ShadCN theme: extend with these custom colors in globals.css
+
+=====================================================
+ENVIRONMENT VARIABLES
+=====================================================
+
+backend/.env:
+APP_NAME=ToolboxHub
+APP_VERSION=1.0.0
+DEBUG=True
+DATABASE_URL=sqlite:///./toolbox_hub.db
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+UPLOAD_DIR=./uploads
+MAX_FILE_SIZE_MB=2048
+OPENROUTER_API_KEY=sk-or-xxxxxxxxxxxxx
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+AI_MODEL=qwen/qwen3.6-plus:free
+WHISPER_MODEL=large-v3
+WHISPER_DEVICE=cpu
+WHISPER_COMPUTE_TYPE=int8
+
+frontend/.env.local:
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+NEXT_PUBLIC_APP_NAME=ToolboxHub
+
+=====================================================
+REQUIREMENTS.txt (backend)
+=====================================================
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+python-dotenv==1.0.0
+sqlalchemy==2.0.25
+httpx==0.26.0
+faster-whisper==1.0.1
+yt-dlp==2024.1.1
+websockets==12.0
+aiofiles==23.2.1
+pydantic==2.5.3
+
+=====================================================
+PACKAGE.JSON DEPENDENCIES (frontend)
+=====================================================
+dependencies:
+  next: 14.1.0
+  react: ^18.2.0
+  react-dom: ^18.2.0
+  typescript: ^5.3.3
+  tailwindcss: ^3.4.1
+  zustand: ^4.5.0
+  axios: ^1.6.5
+  react-player: ^2.14.1
+  socket.io-client: ^4.7.4
+  lucide-react: ^0.312.0
+  react-dropzone: ^14.2.3
+  sonner: ^1.4.0
+  date-fns: ^3.3.0
+  clsx: ^2.1.0
+  tailwind-merge: ^2.2.0
+  class-variance-authority: ^0.7.0
+
+devDependencies:
+  @types/node: ^20
+  @types/react: ^18
+  eslint: ^8
+  eslint-config-next: 14.1.0
+  postcss: ^8
+  autoprefixer: ^10
+
+=====================================================
+CRITICAL IMPLEMENTATION DETAILS
+=====================================================
+
+1. BACKEND main.py STRUCTURE:
+   - Create FastAPI app with lifespan (startup: create_all_tables)
+   - Add CORS middleware
+   - Include ALL tool routers with prefixes:
+     app.include_router(clipmaster_router, prefix="/api/clipmaster")
+     app.include_router(pdf_placeholder, prefix="/api/pdf-converter")
+     etc.
+   - Add WebSocket endpoint for ClipMaster progress
+   - Add static file serving for uploaded videos:
+     GET /api/clipmaster/video/{project_id} → StreamingResponse
+   - Health check: GET /api/health
+   - Tools list: GET /api/tools
+
+2. PROCESSING PIPELINE (MUST BE ASYNC BACKGROUND TASK):
+   - POST /api/clipmaster/process/{id} must return IMMEDIATELY
+   - Actual processing runs in background using asyncio.create_task()
+   - Each step updates project.status in DB
+   - Each step sends WebSocket progress update
+   - On any failure: set status="failed", send error via WebSocket
+
+3. TRANSCRIPT CHUNKING:
+   For transcripts estimated to be >100K tokens:
+   - Estimate tokens: len(transcript) / 4 (rough estimate)
+   - Split by timestamp boundaries (every 30 minutes of video)
+   - Each chunk includes 2 minutes of overlap from previous chunk
+   - After all chunks analyzed, merge clips:
+     - Sort all clips by start_time
+     - If two clips from different chunks overlap by >80% time range,
+       keep the one with higher confidence
+   - This ensures no clips are missed at chunk boundaries
+
+4. VIDEO SERVING:
+   - For uploaded videos: stream from backend file system
+     GET /api/clipmaster/video/{project_id}
+     → Check project exists, get file_path
+     → Return StreamingResponse with proper Content-Type
+     → Support Range headers for seeking
+   - For YouTube videos: use the original YouTube URL in React Player
+     (React Player natively supports YouTube URLs)
+
+5. FRONTEND API LAYER (lib/api.ts):
+   - Create axios instance with baseURL from env
+   - Interceptors for error handling (toast on 4xx/5xx)
+   - Typed API functions:
+     clipmaster.upload(file: File)
+     clipmaster.processUrl(url: string)
+     clipmaster.startProcessing(projectId: number, rubricId?: number)
+     clipmaster.getProject(projectId: number)
+     clipmaster.getProjects(params?)
+     clipmaster.deleteProject(projectId: number)
+     clipmaster.getClips(projectId: number, filters?)
+     clipmaster.updateClip(clipId: number, data)
+     clipmaster.deleteClip(clipId: number)
+     clipmaster.approveAll(projectId: number)
+     clipmaster.bulkAction(projectId: number, clipIds, action)
+     clipmaster.exportClips(projectId: number, format, onlyApproved)
+     clipmaster.getRubrics()
+     clipmaster.createRubric(data)
+     clipmaster.updateRubric(rubricId, data)
+     clipmaster.deleteRubric(rubricId)
+
+6. ZUSTAND STORES:
+   useProjectStore:
+     - currentProject: Project | null
+     - projects: Project[]
+     - loading: boolean
+     - fetchProject(id)
+     - fetchProjects()
+     - deleteProject(id)
+   
+   useClipStore:
+     - clips: Clip[]
+     - filteredClips: Clip[] (computed)
+     - activeClipId: number | null
+     - filters: { categories, minConfidence, search, sortBy }
+     - fetchClips(projectId)
+     - updateClip(clipId, data)
+     - deleteClip(clipId)
+     - approveClip(clipId)
+     - approveAll()
+     - setActiveClip(clipId)
+     - setFilters(filters)
+
+7. WEBSOCKET HOOK (useWebSocket.ts):
+   - Input: projectId
+   - Connects to ws://localhost:8000/ws/clipmaster/progress/{projectId}
+   - Returns: { step, progress, message, isConnected, error }
+   - Auto-reconnect on disconnect (max 5 retries)
+   - Cleanup on unmount
+
+8. RESPONSIVE DESIGN:
+   - Dashboard: 2 columns on lg+, stack on md and below
+   - Homepage grid: 3 cols lg, 2 cols md, 1 col sm
+   - Clip cards: full width always
+   - Video player: 16:9 ratio, max height on large screens
+   - Navbar: hamburger menu on mobile
+
+=====================================================
+BUILD ORDER
+=====================================================
+
+PHASE 1 — BACKEND CORE:
+Step 1: main.py + config.py + database.py + models/base.py
+Step 2: All ClipMaster SQLAlchemy models (project, clip, transcript, rubric)
+Step 3: All Pydantic schemas
+Step 4: Upload router (file upload + YouTube URL)
+Step 5: Video processor service (FFmpeg)
+Step 6: YouTube downloader service (yt-dlp)
+Step 7: Transcriber service (faster-whisper)
+Step 8: AI analyzer service (OpenRouter Qwen)
+Step 9: Progress manager (WebSocket)
+Step 10: Process router (full pipeline)
+Step 11: Clips router (CRUD + filters)
+Step 12: Export router + service
+Step 13: Rubrics router
+Step 14: Placeholder tool routers
+Step 15: Video streaming endpoint
+
+PHASE 2 — FRONTEND:
+Step 16: Next.js setup + Tailwind + ShadCN + dark theme
+Step 17: TypeScript types + API layer + constants
+Step 18: Shared components (Navbar, Footer, ToolCard, ComingSoon)
+Step 19: Homepage (tool grid)
+Step 20: ClipMaster upload page
+Step 21: Zustand stores
+Step 22: WebSocket hook
+Step 23: Processing page
+Step 24: Dashboard — Video player + Timeline
+Step 25: Dashboard — ClipCard + ClipList + FilterBar
+Step 26: Dashboard — Edit/Approve/Delete interactions
+Step 27: Dashboard — Export modal
+Step 28: History page
+Step 29: Rubrics page
+Step 30: Coming Soon pages
+Step 31: Keyboard shortcuts
+Step 32: Final polish, animations, error states, loading states
+
+=====================================================
+START BUILDING NOW.
+Begin with Step 1. Create EVERY file with COMPLETE code.
+No placeholders. No "// TODO". No shortcuts.
+After each step, list what was created and move to next.
+=====================================================
+```
