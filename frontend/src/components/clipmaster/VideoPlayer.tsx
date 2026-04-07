@@ -1,6 +1,7 @@
 "use client";
 
-import ReactPlayer from "react-player";
+import dynamic from "next/dynamic";
+const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, RotateCcw, Volume2, Maximize, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
