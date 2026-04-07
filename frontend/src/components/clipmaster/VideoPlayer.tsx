@@ -7,16 +7,23 @@ import { cn } from "@/lib/utils";
 
 interface VideoPlayerProps {
   url: string;
-  onProgress: (state: { playedSeconds: number }) => void;
+  onProgress: (state: any) => void;
   onDuration: (duration: number) => void;
   seekTo?: number | null;
+  isPlaying?: boolean;
 }
 
-export default function VideoPlayer({ url, onProgress, onDuration, seekTo }: VideoPlayerProps) {
+export default function VideoPlayer({ url, onProgress, onDuration, seekTo, isPlaying }: VideoPlayerProps) {
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [playbackRate, setPlaybackRate] = useState(1.0);
-  const playerRef = useRef<ReactPlayer>(null);
+  const playerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (isPlaying !== undefined) {
+      setPlaying(isPlaying);
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     if (seekTo !== null && seekTo !== undefined) {

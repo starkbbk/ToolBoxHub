@@ -152,6 +152,7 @@ export default function DashboardPage() {
               onProgress={(state) => setCurrentTime(state.playedSeconds)}
               onDuration={setVideoDuration}
               seekTo={seekTo}
+              isPlaying={isPlaying}
             />
             
             <div className="mt-6 px-2">
