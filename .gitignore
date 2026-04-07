@@ -1,0 +1,30 @@
+# Python
+backend/venv/
+backend/.env
+__pycache__/
+*.pyc
+.ipynb_checkpoints
+
+# Node
+frontend/node_modules/
+frontend/.env.local
+frontend/.next/
+frontend/out/
+build/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+backend/uploads/
+backend/toolbox_hub.db
+*.mp4
+*.mkv
+*.csv
+*.json
+*.srt

@@ -1,0 +1,42 @@
+export const TOOLS = [
+  {
+    id: "clipmaster",
+    name: "ClipMaster",
+    description: "AI-powered video clip extractor and highlighter.",
+    icon: "🎬",
+    route: "/clipmaster",
+    status: "active",
+  },
+  {
+    id: "pdf-converter",
+    name: "PDF Converter",
+    description: "Convert documents to and from PDF format quickly.",
+    icon: "📄",
+    route: "/pdf-converter",
+    status: "coming_soon",
+  },
+  {
+    id: "image-compressor",
+    name: "Image Compressor",
+    description: "Reduce image file size without losing quality.",
+    icon: "🖼️",
+    route: "/image-compressor",
+    status: "coming_soon",
+  },
+  {
+    id: "audio-transcriber",
+    name: "Audio Transcriber",
+    description: "Convert speech to text with high accuracy.",
+    icon: "🎙️",
+    route: "/audio-transcriber",
+    status: "coming_soon",
+  },
+  {
+    id: "text-summarizer",
+    name: "Text Summarizer",
+    description: "Condense long articles into short summaries.",
+    icon: "📝",
+    route: "/text-summarizer",
+    status: "coming_soon",
+  },
+];
