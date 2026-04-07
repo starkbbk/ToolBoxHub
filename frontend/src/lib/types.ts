@@ -59,6 +59,19 @@ export interface Rubric {
   created_at: string;
 }
 
+export interface PDFJob {
+  id: number;
+  title: string;
+  status: string;
+  job_type: string | null;
+  original_file_path: string | null;
+  output_path: string | null;
+  error_message: string | null;
+  page_count: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface WSMessage {
   step: string;
   progress: number;

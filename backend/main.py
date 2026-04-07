@@ -10,7 +10,7 @@ from backend.shared.response import success_response
 # Import tools routers
 from backend.tools.clipmaster.routers import router as clipmaster_router
 from backend.tools.clipmaster.services.progress_manager import progress_manager
-from backend.tools.pdf_converter.routers.placeholder import router as pdf_converter_router
+from backend.tools.pdf_converter.routers import router as pdf_converter_router
 from backend.tools.image_compressor.routers.placeholder import router as image_compressor_router
 from backend.tools.audio_transcriber.routers.placeholder import router as audio_transcriber_router
 from backend.tools.text_summarizer.routers.placeholder import router as text_summarizer_router
@@ -53,7 +53,7 @@ def health_check():
         "version": settings.app_version,
         "tools": [
             {"id": "clipmaster", "status": "active"},
-            {"id": "pdf-converter", "status": "coming_soon"},
+            {"id": "pdf-converter", "status": "active"},
             {"id": "image-compressor", "status": "coming_soon"},
             {"id": "audio-transcriber", "status": "coming_soon"},
             {"id": "text-summarizer", "status": "coming_soon"}
@@ -64,7 +64,7 @@ def health_check():
 def get_tools():
     return success_response([
         {"id": "clipmaster", "name": "ClipMaster", "status": "active"},
-        {"id": "pdf-converter", "name": "PDF Converter", "status": "coming_soon"},
+        {"id": "pdf-converter", "name": "PDF Converter", "status": "active"},
         {"id": "image-compressor", "name": "Image Compressor", "status": "coming_soon"},
         {"id": "audio-transcriber", "name": "Audio Transcriber", "status": "coming_soon"},
         {"id": "text-summarizer", "name": "Text Summarizer", "status": "coming_soon"}
