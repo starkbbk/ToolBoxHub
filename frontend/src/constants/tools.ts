@@ -1,42 +1,60 @@
-export const TOOLS = [
+import { Video, FileText, Image, Mic, AlignLeft } from "lucide-react";
+import { ReactNode } from "react";
+
+export interface Tool {
+  id: string;
+  name: string;
+  description: string;
+  icon: any; // Using any for component reference
+  route: string;
+  status: "active" | "coming_soon";
+  glowColor: string;
+}
+
+export const TOOLS: Tool[] = [
   {
     id: "clipmaster",
     name: "ClipMaster",
     description: "AI-powered video clip extractor and highlighter.",
-    icon: "🎬",
+    icon: Video,
     route: "/clipmaster",
     status: "active",
+    glowColor: "rgba(99, 102, 241, 0.4)",
   },
   {
     id: "pdf-converter",
     name: "PDF Converter",
     description: "Convert documents to and from PDF format quickly.",
-    icon: "📄",
+    icon: FileText,
     route: "/pdf-converter",
-    status: "coming_soon",
+    status: "active",
+    glowColor: "rgba(59, 130, 246, 0.4)",
   },
   {
     id: "image-compressor",
     name: "Image Compressor",
     description: "Reduce image file size without losing quality.",
-    icon: "🖼️",
+    icon: Image,
     route: "/image-compressor",
     status: "coming_soon",
+    glowColor: "rgba(16, 185, 129, 0.4)",
   },
   {
     id: "audio-transcriber",
     name: "Audio Transcriber",
     description: "Convert speech to text with high accuracy.",
-    icon: "🎙️",
+    icon: Mic,
     route: "/audio-transcriber",
     status: "coming_soon",
+    glowColor: "rgba(245, 158, 11, 0.4)",
   },
   {
     id: "text-summarizer",
     name: "Text Summarizer",
     description: "Condense long articles into short summaries.",
-    icon: "📝",
+    icon: AlignLeft,
     route: "/text-summarizer",
     status: "coming_soon",
+    glowColor: "rgba(139, 92, 246, 0.4)",
   },
 ];
