@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProjectStore } from "@/stores/useProjectStore";
 import PageHeader from "@/components/shared/PageHeader";
+import ConfirmModal from "@/components/shared/ConfirmModal";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileVideo, 
   Play, 
@@ -19,6 +21,7 @@ export default function HistoryPage() {
   const router = useRouter();
   const { projects, fetchProjects, deleteProject, loading } = useProjectStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
 
   useEffect(() => {
     fetchProjects();
@@ -27,6 +30,13 @@ export default function HistoryPage() {
   const filteredProjects = projects.filter(p => 
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleDelete = () => {
+    if (projectToDelete !== null) {
+      deleteProject(projectToDelete);
+      setProjectToDelete(null);
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -65,66 +75,85 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredProjects.map((project) => (
-            <div 
-              key={project.id}
-              className="group relative flex flex-col rounded-3xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 transition-all hover:border-[#3a3a3a] hover:bg-[#202020] hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
-            >
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-zinc-900 p-3 text-indigo-400 group-hover:scale-110 transition-transform">
-                    {project.source_type === "youtube" ? <Play className="h-6 w-6" /> : <FileVideo className="h-6 w-6" />}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white line-clamp-1 pr-4">{project.title}</h3>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md",
-                        project.status === "completed" ? "bg-green-500/10 text-green-500" : 
-                        project.status === "failed" ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"
-                      )}>
-                        {project.status}
-                      </span>
+          <AnimatePresence mode="popLayout">
+            {filteredProjects.map((project) => (
+              <motion.div 
+                key={project.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ 
+                  opacity: 0, 
+                  scale: 0.5, 
+                  filter: "blur(20px)",
+                  transition: { duration: 0.5, ease: "backIn" }
+                }}
+                className="group relative flex flex-col rounded-3xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 transition-all hover:border-[#3a3a3a] hover:bg-[#202020] hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+              >
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl bg-zinc-900 p-3 text-indigo-400 group-hover:scale-110 transition-transform">
+                      {project.source_type === "youtube" ? <Play className="h-6 w-6" /> : <FileVideo className="h-6 w-6" />}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white line-clamp-1 pr-4">{project.title}</h3>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className={cn(
+                          "text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md",
+                          project.status === "completed" ? "bg-green-500/10 text-green-500" : 
+                          project.status === "failed" ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"
+                        )}>
+                          {project.status}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {new Date(project.created_at).toLocaleDateString()}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="flex items-center gap-2 text-xs text-zinc-500">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {new Date(project.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-500">
+                    <ClockIcon className="h-3.5 w-3.5" />
+                    {Math.round(project.duration_seconds || 0)}s Duration
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <ClockIcon className="h-3.5 w-3.5" />
-                  {Math.round(project.duration_seconds || 0)}s Duration
-                </div>
-              </div>
 
-              <div className="mt-auto flex items-center gap-3">
-                <button 
-                  onClick={() => router.push(`/clipmaster/dashboard/${project.id}`)}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-zinc-900 border border-[#2a2a2a] py-3 text-sm font-bold text-white transition-all hover:bg-zinc-800 hover:border-zinc-700"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Open Dashboard
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm("Are you sure? This will delete all project data and files.")) {
-                      deleteProject(project.id);
-                    }
-                  }}
-                  className="rounded-xl border border-[#2a2a2a] bg-zinc-900 p-3 text-zinc-500 transition-all hover:text-red-500 hover:bg-red-500/5 hover:border-red-500/20"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+                <div className="mt-auto flex items-center gap-3">
+                  <button 
+                    onClick={() => router.push(`/clipmaster/dashboard/${project.id}`)}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-zinc-900 border border-[#2a2a2a] py-3 text-sm font-bold text-white transition-all hover:bg-zinc-800 hover:border-zinc-700"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open Dashboard
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setProjectToDelete(project.id);
+                    }}
+                    className="rounded-xl border border-[#2a2a2a] bg-zinc-900 p-3 text-zinc-500 transition-all hover:text-red-500 hover:bg-red-500/5 hover:border-red-500/20"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={projectToDelete !== null}
+        onClose={() => setProjectToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Project"
+        message="Are you sure you want to delete this project? This action cannot be undone and all associated files will be permanently removed."
+        confirmText="Yes, Delete"
+        cancelText="Keep Project"
+      />
     </div>
   );
 }
