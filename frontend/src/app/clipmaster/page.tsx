@@ -9,6 +9,7 @@ import { clipmaster } from "@/lib/api";
 import { toast } from "sonner";
 import { useProjectStore } from "@/stores/useProjectStore";
 import { Rocket, History } from "lucide-react";
+import { cleanAnsi } from "@/lib/utils";
 
 export default function ClipMasterPage() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function ClipMasterPage() {
       await clipmaster.startProcessing(projectId);
       router.push(`/clipmaster/processing/${projectId}`);
     } catch (err: any) {
-      toast.error(err.message || "Failed to start extraction");
+      toast.error(cleanAnsi(err.message || "Failed to start extraction"));
     } finally {
       setIsUploading(false);
     }

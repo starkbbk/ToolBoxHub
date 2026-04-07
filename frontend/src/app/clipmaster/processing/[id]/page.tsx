@@ -48,7 +48,7 @@ export default function ProcessingPage() {
     <div className="flex min-h-[70vh] items-center justify-center py-12">
       <div className="w-full max-w-2xl rounded-3xl border border-[#2a2a2a] bg-[#1a1a1a] p-10 shadow-2xl">
         <header className="mb-12 text-center">
-          <h1 className="mb-2 text-2xl font-bold text-white">
+          <h1 className="mb-2 text-2xl font-bold text-white line-clamp-2 break-words px-4">
             {currentProject?.title || "Processing Video..."}
           </h1>
           <p className="text-zinc-500">

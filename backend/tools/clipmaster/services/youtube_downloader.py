@@ -38,6 +38,12 @@ def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
             'Sec-Fetch-Mode': 'navigate',
         },
         'referer': 'https://www.youtube.com/',
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web'],
+                'skip': ['webpage', 'hls', 'dash']
+            }
+        }
     }
 
     try:
