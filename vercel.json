@@ -8,6 +8,10 @@
     {
       "source": "/uploads/:match*",
       "destination": "https://toolbox-hub-backend.onrender.com/uploads/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
     }
   ]
 }

@@ -20,29 +20,33 @@ from tools.text_remover.routers import router as text_remover_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Atomic DB Init - only if no other worker has done it
     try:
-        Base.metadata.create_all(bind=engine)
+        if not os.path.exists('db_init.lock'):
+            with open('db_init.lock', 'w') as f:
+                f.write('locked')
+            Base.metadata.create_all(bind=engine)
+            logging.info("DATABASE INITIALIZED")
     except Exception as e:
-        print(f"DB INIT WARNING: {e}")
-    # Ensure all upload directories exist
+        logging.warning(f"DB INIT SKIPPED: {e}")
+    
     os.makedirs(os.path.join(settings.upload_dir, "clipmaster"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "pdf_converter"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "image_compressor"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "text_remover"), exist_ok=True)
     
-    # Log memory at startup
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / 1024 / 1024
     logging.info(f"API STARTUP MEMORY: {mem:.2f} MB")
     yield
-    # Shutdown
 
 app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
 
-# CORS configuration
-origins = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]
+@app.get("/")
+async def root():
+    return {"status": "alive", "service": "ToolboxHub Backend", "msg": "API is online."}
 
+origins = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -51,18 +55,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static Files for Production
 from fastapi.staticfiles import StaticFiles
-
-@app.get("/")
-async def root():
-    return {"status": "alive", "service": "ToolboxHub Backend", "msg": "API is online. Use /api/health for details."}
-
-# Ensure upload directories exist
 os.makedirs(settings.upload_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
 
-# API Routes
 app.include_router(clipmaster_router, prefix="/api/clipmaster")
 app.include_router(pdf_converter_router, prefix="/api/pdf-converter")
 app.include_router(image_compressor_router, prefix="/api/image-compressor")
@@ -74,60 +70,17 @@ app.include_router(text_remover_router, prefix="/api/text-remover")
 def health_check():
     process = psutil.Process(os.getpid())
     mem_mb = process.memory_info().rss / 1024 / 1024
-    
-    return success_response({
-        "status": "ok",
-        "version": settings.app_version,
-        "memory_usage_mb": round(mem_mb, 2),
-        "tools": [
-            {"id": "clipmaster", "status": "active"},
-            {"id": "pdf-converter", "status": "active"},
-            {"id": "image-compressor", "status": "coming_soon"},
-            {"id": "audio-transcriber", "status": "coming_soon"},
-            {"id": "text-summarizer", "status": "coming_soon"},
-            {"id": "text-remover", "status": "active"}
-        ]
-    })
+    return success_response({"status": "ok", "memory_usage_mb": round(mem_mb, 2)})
 
 @app.get("/api/tools")
 def get_tools():
-    return success_response([
-        {"id": "clipmaster", "name": "ClipMaster", "status": "active"},
-        {"id": "pdf-converter", "name": "PDF Converter", "status": "active"},
-        {"id": "image-compressor", "name": "Image Compressor", "status": "coming_soon"},
-        {"id": "audio-transcriber", "name": "Audio Transcriber", "status": "coming_soon"},
-        {"id": "text-summarizer", "name": "Text Summarizer", "status": "coming_soon"},
-        {"id": "text-remover", "name": "Text Remover", "status": "active"}
-    ])
+    return success_response([{"id": "clipmaster", "status": "active"}, {"id": "text-remover", "status": "active"}])
 
 @app.websocket("/ws/clipmaster/progress/{project_id}")
 async def websocket_progress(websocket: WebSocket, project_id: int):
-    print(f"DEBUG: WebSocket connection attempt for project {project_id}")
     await progress_manager.connect(project_id, websocket)
-    print(f"DEBUG: WebSocket connected for project {project_id}")
-    
-    # Send current state immediately so frontend isn't stuck waiting for the next update
-    from database import SessionLocal
-    from tools.clipmaster.models.project import Project
-    db = SessionLocal()
-    try:
-        project = db.query(Project).filter(Project.id == project_id).first()
-        if project:
-            await progress_manager.send_update(
-                project_id, 
-                project.status, 
-                0, 
-                f"Project {project.status.replace('_', ' ')}..." if project.status != "uploading" else "Ready to process"
-            )
-    finally:
-        db.close()
-
     try:
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
         progress_manager.disconnect(project_id, websocket)
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
