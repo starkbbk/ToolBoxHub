@@ -273,10 +273,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground select-none;
+    @apply bg-background text-foreground select-none overflow-x-hidden;
+    touch-action: pan-y;
   }
   html {
-    @apply font-sans;
+    @apply font-sans overflow-x-hidden;
   }
 }
 

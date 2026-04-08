@@ -79,7 +79,7 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "block text-lg font-black uppercase tracking-[0.2em] transition-all p-4 rounded-2xl border",
+                  "block text-lg font-black uppercase tracking-wider transition-all p-4 rounded-2xl border",
                   pathname === link.href 
                     ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20" 
                     : "bg-white/5 border-white/5 text-zinc-500 hover:text-white hover:bg-white/10"
