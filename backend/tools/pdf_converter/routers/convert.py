@@ -66,8 +66,10 @@ async def run_to_text_pipeline(job_id: int, db: Session):
         job.error_message = str(e)
         db.commit()
 
+from utils.usage import check_usage_limit
+
 @router.post("/{job_id}/to-images")
-async def pdf_to_images(job_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def pdf_to_images(job_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), authenticated: bool = Depends(lambda: check_usage_limit("pdf_conversions"))):
     job = db.query(PDFJob).filter(PDFJob.id == job_id).first()
     if not job: raise HTTPException(status_code=404, detail="Job not found")
     
@@ -75,7 +77,7 @@ async def pdf_to_images(job_id: int, background_tasks: BackgroundTasks, db: Sess
     return APIResponse.success(message="Image conversion started")
 
 @router.post("/{job_id}/to-text")
-async def pdf_to_text(job_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def pdf_to_text(job_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), authenticated: bool = Depends(lambda: check_usage_limit("pdf_conversions"))):
     job = db.query(PDFJob).filter(PDFJob.id == job_id).first()
     if not job: raise HTTPException(status_code=404, detail="Job not found")
     

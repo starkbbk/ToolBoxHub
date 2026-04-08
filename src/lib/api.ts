@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
 import { API_URL } from '@/constants';
 
 const api = axios.create({
@@ -7,6 +7,18 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Request interceptor for auth token
+api.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error: any) => Promise.reject(error)
+);
 
 // Response interceptor for error handling
 api.interceptors.response.use(
@@ -49,6 +61,15 @@ export const clipmaster = {
   createRubric: (data: any) => api.post('/api/clipmaster/rubric', data),
   updateRubric: (rubricId: number, data: any) => api.put(`/api/clipmaster/rubric/${rubricId}`, data),
   deleteRubric: (rubricId: number) => api.delete(`/api/clipmaster/rubric/${rubricId}`),
+};
+
+export const auth = {
+  signup: (data: any) => api.post('/api/auth/signup', data),
+  login: (data: any) => api.post('/api/auth/login', data),
+  google: (token: string) => api.post('/api/auth/google', { token }),
+  me: () => api.get('/api/auth/me'),
+  forgotPassword: (email: string) => api.post('/api/auth/forgot-password', { email }),
+  resetPassword: (data: any) => api.post('/api/auth/reset-password', data),
 };
 
 export const tools = {

@@ -59,6 +59,11 @@ from fastapi.staticfiles import StaticFiles
 os.makedirs(settings.upload_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
 
+from routers.auth import router as auth_router
+from routers.subscription import router as subscription_router
+
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(subscription_router, prefix="/api/subscription", tags=["subscription"])
 app.include_router(clipmaster_router, prefix="/api/clipmaster")
 app.include_router(pdf_converter_router, prefix="/api/pdf-converter")
 app.include_router(image_compressor_router, prefix="/api/image-compressor")

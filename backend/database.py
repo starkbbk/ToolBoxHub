@@ -1,17 +1,18 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import motor.motor_asyncio
 from config import settings
-from models.base import Base
 
-engine = create_engine(
-    settings.database_url, connect_args={"check_same_thread": False}
-)
+class Database:
+    client: motor.motor_asyncio.AsyncIOMotorClient = None
+    db = None
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+db = Database()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_database() -> motor.motor_asyncio.AsyncIOMotorDatabase:
+    if db.client is None:
+        db.client = motor.motor_asyncio.AsyncIOMotorClient(settings.mongodb_uri)
+        db.db = db.client.get_database("toolbox_hub")
+    return db.db
+
+async def close_db_connection():
+    if db.client:
+        db.client.close()

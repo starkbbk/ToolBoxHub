@@ -2,13 +2,14 @@ import os
 import uuid
 import json
 import logging
-from fastapi import APIRouter, UploadFile, File, Form, Response
+from fastapi import APIRouter, UploadFile, File, Form, Response, Depends
 from typing import List, Optional
 from fastapi.responses import FileResponse
 
 from config import settings
 from shared.response import success_response, error_response
 from .services import InpainterService, log_memory_usage
+from utils.usage import check_usage_limit
 
 router = APIRouter()
 inpainter = InpainterService()
@@ -18,7 +19,8 @@ logger = logging.getLogger(__name__)
 async def inpaint_image_endpoint(
     image: UploadFile = File(...),
     regions: str = Form(...), # JSON string of regions: [{"x": 10, "y": 20, "w": 30, "h": 40}, ...]
-    radius: int = Form(7)
+    radius: int = Form(7),
+    authenticated: bool = Depends(lambda: check_usage_limit("text_removals"))
 ):
     """
     Surgical inpainting endpoint for images.
@@ -55,7 +57,8 @@ async def inpaint_image_endpoint(
 async def inpaint_frame_endpoint(
     frame: UploadFile = File(...),
     regions: str = Form(...), # JSON string of regions
-    radius: int = Form(7)
+    radius: int = Form(7),
+    authenticated: bool = Depends(lambda: check_usage_limit("text_removals"))
 ):
     """
     Surgical inpainting endpoint for single frames.
@@ -76,6 +79,7 @@ async def inpaint_frame_endpoint(
 async def legacy_video_inpaint(
     video: UploadFile = File(...),
     regions: str = Form(...),
+    authenticated: bool = Depends(lambda: check_usage_limit("text_removals"))
 ):
     """
     Legacy video endpoint - still available for background processing.

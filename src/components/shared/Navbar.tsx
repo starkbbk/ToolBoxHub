@@ -5,22 +5,31 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/constants";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, Settings, CreditCard, LogOut, ChevronDown, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Close menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsDropdownOpen(false);
   }, [pathname]);
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "YTClipMaster", href: "/clipmaster" },
+    { name: "Pricing", href: "/pricing" },
     { name: "History", href: "/clipmaster/history" },
+  ];
+
+  const userMenuItems = [
+    { label: "Profile", href: "/profile", icon: User },
+    { label: "Subscription", href: "/profile", icon: CreditCard },
   ];
 
   return (
@@ -51,11 +60,69 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="hidden md:block rounded-xl bg-white/5 border border-white/10 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-indigo-600 hover:border-indigo-500 shadow-xl">
-            Sign In
-          </button>
+          {!isLoading && (
+            isAuthenticated ? (
+              <div className="relative">
+                <button 
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 p-1 pl-3 pr-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
+                >
+                   {user?.subscription_plan !== 'free' && (
+                    <Sparkles className="h-3 w-3 text-amber-400 fill-amber-400" />
+                  )}
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">
+                    {user?.name.split(' ')[0]}
+                  </span>
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-xs font-bold border border-white/20">
+                    {user?.profile_picture ? (
+                      <img src={user.profile_picture} alt={user.name} className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      user?.name.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <ChevronDown className={cn("h-3 w-3 text-zinc-500 transition-transform", isDropdownOpen && "rotate-180")} />
+                </button>
+
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-0" onClick={() => setIsDropdownOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 top-12 w-48 rounded-2xl bg-[#0c0c0c] border border-white/10 shadow-2xl p-2 z-10"
+                      >
+                        {userMenuItems.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors group"
+                          >
+                            <item.icon className="h-4 w-4 text-zinc-500 group-hover:text-indigo-400" />
+                            <span className="text-xs font-bold text-zinc-400 group-hover:text-white">{item.label}</span>
+                          </Link>
+                        ))}
+                        <div className="h-px bg-white/5 my-1 mx-2" />
+                        <button
+                          onClick={logout}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 transition-colors group"
+                        >
+                          <LogOut className="h-4 w-4 text-zinc-500 group-hover:text-red-400" />
+                          <span className="text-xs font-bold text-zinc-400 group-hover:text-white">Logout</span>
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link href="/login" className="hidden md:block rounded-xl bg-white/5 border border-white/10 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-indigo-600 hover:border-indigo-500 shadow-xl">
+                Sign In
+              </Link>
+            )
+          )}
           
-          {/* Mobile Menu Toggle */}
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-zinc-400 hover:text-white transition-colors"
@@ -88,9 +155,22 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            <button className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-transform mt-4">
-              Sign In
-            </button>
+            
+            {isAuthenticated ? (
+              <button 
+                onClick={logout}
+                className="w-full py-5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-black uppercase tracking-widest text-xs active:scale-95 transition-transform mt-4"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link 
+                href="/login"
+                className="block text-center w-full py-5 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-transform mt-4"
+              >
+                Sign In
+              </Link>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -6,6 +6,9 @@ import Footer from "@/components/shared/Footer";
 import DynamicBackground from "@/components/layout/DynamicBackground";
 import ScrollbarControl from "@/components/layout/ScrollbarControl";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/context/AuthContext";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { GOOGLE_CLIENT_ID } from "@/constants";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,14 +25,18 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark scroll-smooth">
       <body className={`${inter.className} bg-[#050505] text-white min-h-screen flex flex-col relative overflow-x-hidden`}>
-        <ScrollbarControl />
-        <DynamicBackground />
-        <Navbar />
-        <main className="flex-1 container mx-auto px-4 pt-28 pb-10 relative z-10">
-          {children}
-        </main>
-        <Footer />
-        <Toaster position="top-right" richColors theme="dark" />
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || ""}>
+          <AuthProvider>
+            <ScrollbarControl />
+            <DynamicBackground />
+            <Navbar />
+            <main className="flex-1 container mx-auto px-4 pt-28 pb-10 relative z-10">
+              {children}
+            </main>
+            <Footer />
+            <Toaster position="top-right" richColors theme="dark" />
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );
