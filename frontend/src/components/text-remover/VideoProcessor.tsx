@@ -18,7 +18,6 @@ import {
   Eye,
   X
 } from "lucide-react";
-import Tesseract from "tesseract.js";
 import PDFDropzone from "../pdf-converter/PDFDropzone";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -142,38 +141,55 @@ export default function VideoProcessor() {
     }
 
     setIsDetecting(true);
-    setStatus("Analyzing frame...");
+    setStatus("Capturing frame...");
 
     try {
+      // Capture current frame to canvas then blob
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
       const ctx = canvas.getContext("2d");
       ctx?.drawImage(videoRef.current, 0, 0);
-      
-      const { data: { words } } = await Tesseract.recognize(canvas, 'eng');
-      
+
+      setStatus("Sending to AI backend...");
+
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error("Failed to capture frame")), "image/jpeg", 0.9)
+      );
+
+      const formData = new FormData();
+      formData.append("image", blob, "frame.jpg");
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/api/text-remover/detect`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const json = await res.json();
+      if (json.status !== "success") throw new Error(json.message || "Detection failed");
+
       const rect = canvasRef.current.getBoundingClientRect();
       const scaleX = rect.width / videoRef.current.videoWidth;
       const scaleY = rect.height / videoRef.current.videoHeight;
 
-      const newMasks = words
-        .filter((w: any) => w.confidence > 50)
-        .map((w: any) => ({
-          id: `mask-${Math.random()}`,
-          x: w.bbox.x0 * scaleX,
-          y: w.bbox.y0 * scaleY,
-          width: (w.bbox.x1 - w.bbox.x0) * scaleX,
-          height: (w.bbox.y1 - w.bbox.y0) * scaleY,
-          startTime: 0,
-          endTime: duration
-        }));
+      const newMasks = json.data.regions.map((r: any) => ({
+        id: `mask-${Math.random()}`,
+        x: r.x * scaleX,
+        y: r.y * scaleY,
+        width: r.w * scaleX,
+        height: r.h * scaleY,
+        startTime: 0,
+        endTime: duration
+      }));
 
       setMasks([...masks, ...newMasks]);
       toast.success(`Automatically detected ${newMasks.length} text regions!`);
     } catch (err) {
       console.error(err);
-      toast.error("Auto-detection failed. Ensure you are connected to the internet.");
+      toast.error("Auto-detection failed. Is the backend running?");
     } finally {
       setIsDetecting(false);
       setStatus("");
