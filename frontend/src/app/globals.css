@@ -279,3 +279,13 @@
     @apply font-sans;
   }
 }
+
+/* Global Scrollbar Hiding */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+}

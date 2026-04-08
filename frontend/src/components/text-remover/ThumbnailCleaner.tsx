@@ -34,20 +34,17 @@ export default function ThumbnailCleaner() {
     setProcessing(true);
 
     try {
-      // 1. Detect Text with Tesseract
       const worker = await createWorker('eng');
-      const { data: { words } } = await worker.recognize(file);
+      const result = await worker.recognize(file);
+      const { words } = result.data as any;
       
-      // 2. Filter for "Thumbnail style" text (Usually large headers)
-      // Large text in thumbnails usually has a high font size relative to image
-      const regions = words.map(word => ({
+      const regions = words.map((word: any) => ({
         x: word.bbox.x0,
         y: word.bbox.y0,
         w: word.bbox.x1 - word.bbox.x0,
         h: word.bbox.y1 - word.bbox.y0
       }));
 
-      // 3. Process Canvas
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       const img = new Image();
@@ -64,16 +61,13 @@ export default function ThumbnailCleaner() {
 
       if (!ctx) return;
 
-      // Apply inpainting on all regions automatically
       for (const r of regions) {
-        // Expand region slightly for better blending
         const m = 10; 
         const nx = Math.max(0, r.x - m);
         const ny = Math.max(0, r.y - m);
         const nw = r.w + (m * 2);
         const nh = r.h + (m * 2);
 
-        // Thumbnail context-aware fill simulation
         ctx.fillStyle = getDominantBackground(ctx, nx, ny, nw, nh);
         ctx.fillRect(r.x, r.y, r.w, r.h);
       }
@@ -89,12 +83,10 @@ export default function ThumbnailCleaner() {
   };
 
   const getDominantBackground = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
-    // Advanced dominant color sampling from the region boundaries
     const data = ctx.getImageData(x, y, w, h).data;
     const colors: Record<string, number> = {};
     
-    // Sample a few points around the edges
-    for (let i = 0; i < data.length; i += 40) { // Sparse sampling
+    for (let i = 0; i < data.length; i += 40) {
        const key = `${data[i]},${data[i+1]},${data[i+2]}`;
        colors[key] = (colors[key] || 0) + 1;
     }

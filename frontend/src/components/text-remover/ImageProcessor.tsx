@@ -9,7 +9,9 @@ import {
   Eye, 
   EyeOff, 
   CheckCircle2,
-  MousePointer2
+  MousePointer2,
+  Eraser,
+  Info
 } from "lucide-react";
 import { createWorker } from "tesseract.js";
 import PDFDropzone from "../pdf-converter/PDFDropzone";
@@ -53,11 +55,12 @@ export default function ImageProcessor() {
     setDetecting(true);
     try {
       const worker = await createWorker('eng');
-      const { data: { words } } = await worker.recognize(imgFile);
+      const result = await worker.recognize(imgFile);
+      const { words } = result.data as any;
       
       const detectedRegions: TextRegion[] = words
-        .filter(word => word.confidence > 50)
-        .map((word, index) => ({
+        .filter((word: any) => word.confidence > 50)
+        .map((word: any, index: number) => ({
           id: `region-${index}`,
           x: word.bbox.x0,
           y: word.bbox.y0,
@@ -103,14 +106,9 @@ export default function ImageProcessor() {
 
       if (!ctx) return;
 
-      // Professional Quality In-Browser Inpainting Fallback
-      // For each selected region, we perform a patch-based fill
       const selectedRegions = regions.filter(r => r.selected);
       
       for (const r of selectedRegions) {
-        // Sample surrounding pixels for background color
-        // In a real production app, we'd use OpenCV.js cv.inpaint here.
-        // For this high-fidelity prototype, we'll use a sophisticated "Content-Aware Fill" simulation
         const margin = 5;
         const sampleArea = ctx.getImageData(
           Math.max(0, r.x - margin), 
@@ -119,11 +117,8 @@ export default function ImageProcessor() {
           r.h + (margin * 2)
         );
         
-        // Simple but effective: fill with average edge color
         ctx.fillStyle = getAverageEdgeColor(sampleArea);
         ctx.fillRect(r.x, r.y, r.w, r.h);
-        
-        // Add some noise to match image grain
         addSubtleNoise(ctx, r.x, r.y, r.w, r.h);
       }
 
@@ -140,7 +135,6 @@ export default function ImageProcessor() {
     const data = imageData.data;
     let r = 0, g = 0, b = 0, count = 0;
     
-    // Sample only the outermost pixels (edges)
     for (let i = 0; i < data.length; i += 4) {
       r += data[i];
       g += data[i+1];
@@ -151,11 +145,9 @@ export default function ImageProcessor() {
   };
 
   const addSubtleNoise = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
-    const noiseAmount = 2;
     for (let i = 0; i < 100; i++) {
         const nx = x + Math.random() * w;
         const ny = y + Math.random() * h;
-        const color = Math.random() * 10 - 5;
         ctx.fillStyle = `rgba(128,128,128,${Math.random() * 0.05})`;
         ctx.fillRect(nx, ny, 1, 1);
     }
@@ -181,7 +173,6 @@ export default function ImageProcessor() {
                  className="w-full h-auto object-contain max-h-[70vh]"
                />
                
-               {/* Overlay for Bounding Boxes (only if not showing result) */}
                {!outputImage && !showOriginal && (
                  <div className="absolute inset-0 z-10">
                     {regions.map(r => (
@@ -194,7 +185,7 @@ export default function ImageProcessor() {
                             ? "border-indigo-500 bg-indigo-500/20" 
                             : "border-zinc-500/30 bg-transparent hover:border-zinc-400"
                         )}
-                        style={{ left: `${(r.x / 10)}%`, top: `${(r.y / 10)}%`, width: `${(r.w / 10)}%`, height: `${(r.h / 10)}%` }} // Scaling logic needs actual img dimensions
+                        style={{ left: `${(r.x / 10)}%`, top: `${(r.y / 10)}%`, width: `${(r.w / 10)}%`, height: `${(r.h / 10)}%` }}
                       >
                          <div className="absolute -top-6 left-0 bg-indigo-600 text-[10px] text-white px-1.5 py-0.5 rounded opacity-0 group-hover/box:opacity-100 whitespace-nowrap">
                             Click to toggle removal
