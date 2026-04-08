@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/.next",
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "https://toolbox-hub-backend.onrender.com/api/:match*"
+    },
+    {
+      "source": "/uploads/:match*",
+      "destination": "https://toolbox-hub-backend.onrender.com/uploads/:match*"
+    }
+  ]
+}
