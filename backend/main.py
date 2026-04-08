@@ -18,13 +18,17 @@ from tools.audio_transcriber.routers import router as audio_transcriber_router
 from tools.text_summarizer.routers import router as text_summarizer_router
 from tools.text_remover.routers import router as text_remover_router
 
-# Ensure all models are imported before create_all()
-from tools.clipmaster.models.project import Project
+@app.get("/")
+async def root():
+    return {"status": "alive", "service": "ToolboxHub Backend", "msg": "API is online. Use /api/health for details."}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"DB INIT WARNING: {e}")
     # Ensure all upload directories exist
     os.makedirs(os.path.join(settings.upload_dir, "clipmaster"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "pdf_converter"), exist_ok=True)
