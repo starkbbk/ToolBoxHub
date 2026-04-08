@@ -101,63 +101,89 @@ export default function ImageProcessor() {
   };
 
   const removeText = async () => {
-    if (!imagePreview || regions.filter(r => r.selected).length === 0) return;
+    if (!file || regions.filter(r => r.selected).length === 0) return;
     setProcessing(true);
 
     try {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-      img.src = imagePreview;
+      const selectedRegions = regions.filter(r => r.selected).map(r => ({
+        x: r.x,
+        y: r.y,
+        w: r.w,
+        h: r.h
+      }));
 
-      await new Promise((resolve) => {
-        img.onload = () => {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx?.drawImage(img, 0, 0);
-          resolve(null);
-        };
-      });
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("regions", JSON.stringify(selectedRegions));
 
-      if (!ctx) return;
+      const res = (await api.post("/api/text-remover/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })) as any;
 
-      const selectedRegions = regions.filter(r => r.selected);
+      if (!res.success) throw new Error(res.message || "Removal failed");
 
-      for (const r of selectedRegions) {
-        const margin = 6;
-        const sx = Math.max(0, r.x - margin);
-        const sy = Math.max(0, r.y - margin);
-        const sw = r.w + margin * 2;
-        const sh = r.h + margin * 2;
-        const sampleData = ctx.getImageData(sx, sy, sw, sh);
-        ctx.fillStyle = getAverageEdgeColor(sampleData);
-        ctx.fillRect(r.x, r.y, r.w, r.h);
-        addSubtleNoise(ctx, r.x, r.y, r.w, r.h);
-      }
-
-      setOutputImage(canvas.toDataURL("image/png"));
-      toast.success("Text removed successfully!");
+      setOutputImage(`${apiUrl}${res.data.output_path}`);
+      toast.success("Text removed seamlessly!");
     } catch (error) {
-      toast.error("Removal failed.");
+      console.error(error);
+      toast.error("Removal failed. Check if backend is running.");
     } finally {
       setProcessing(false);
     }
   };
 
-  const getAverageEdgeColor = (imageData: ImageData) => {
-    const data = imageData.data;
-    let r = 0, g = 0, b = 0, count = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      r += data[i]; g += data[i + 1]; b += data[i + 2]; count++;
-    }
-    return `rgb(${Math.floor(r / count)}, ${Math.floor(g / count)}, ${Math.floor(b / count)})`;
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawStart, setDrawStart] = useState<{ x: number, y: number } | null>(null);
+  const [drawCurrent, setDrawCurrent] = useState<{ x: number, y: number } | null>(null);
+  const [manualMode, setManualMode] = useState(false);
+
+  const startDrawing = (e: React.MouseEvent) => {
+    if (!manualMode || !imgRef.current) return;
+    const rect = imgRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setDrawStart({ x, y });
+    setDrawCurrent({ x, y });
+    setIsDrawing(true);
   };
 
-  const addSubtleNoise = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
-    for (let i = 0; i < 100; i++) {
-      ctx.fillStyle = `rgba(128,128,128,${Math.random() * 0.05})`;
-      ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
+  const onDrawing = (e: React.MouseEvent) => {
+    if (!isDrawing || !imgRef.current) return;
+    const rect = imgRef.current.getBoundingClientRect();
+    setDrawCurrent({ 
+      x: e.clientX - rect.left, 
+      y: e.clientY - rect.top 
+    });
+  };
+
+  const finishDrawing = () => {
+    if (!isDrawing || !drawStart || !drawCurrent || !imgNaturalSize) {
+      setIsDrawing(false);
+      return;
     }
+
+    const { sx, sy } = getScale();
+    
+    const x = Math.min(drawStart.x, drawCurrent.x) / sx;
+    const y = Math.min(drawStart.y, drawCurrent.y) / sy;
+    const w = Math.abs(drawStart.x - drawCurrent.x) / sx;
+    const h = Math.abs(drawStart.y - drawCurrent.y) / sy;
+
+    if (w > 5 && h > 5) {
+      const newRegion: TextRegion = {
+        id: `manual-${Date.now()}`,
+        x, y, w, h,
+        text: "Manual Mask",
+        confidence: 1.0,
+        selected: true
+      };
+      setRegions(prev => [...prev, newRegion]);
+      toast.success("Manual region added");
+    }
+
+    setIsDrawing(false);
+    setDrawStart(null);
+    setDrawCurrent(null);
   };
 
   const { sx, sy } = getScale();
@@ -175,23 +201,45 @@ export default function ImageProcessor() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Preview */}
           <div className="lg:col-span-3 space-y-4">
-            <div ref={containerRef} className="relative rounded-3xl bg-zinc-950/50 border border-white/5 overflow-hidden shadow-2xl">
+            <div 
+              ref={containerRef} 
+              className={cn(
+                "relative rounded-3xl bg-zinc-950/50 border border-white/5 overflow-hidden shadow-2xl",
+                manualMode && "cursor-crosshair"
+              )}
+              onMouseDown={startDrawing}
+              onMouseMove={onDrawing}
+              onMouseUp={finishDrawing}
+              onMouseLeave={finishDrawing}
+            >
               <img
                 ref={imgRef}
                 src={showOriginal ? imagePreview! : (outputImage || imagePreview!)}
                 alt="Preview"
-                className="w-full h-auto object-contain max-h-[70vh]"
+                className="w-full h-auto object-contain max-h-[70vh] pointer-events-none"
                 onLoad={(e) => {
                   const img = e.currentTarget;
                   setImgNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
                 }}
               />
 
+              {/* Drawing Rectangle */}
+              {isDrawing && drawStart && drawCurrent && (
+                <div 
+                  className="absolute border-2 border-indigo-400 bg-indigo-500/20 z-30 pointer-events-none"
+                  style={{
+                    left: Math.min(drawStart.x, drawCurrent.x),
+                    top: Math.min(drawStart.y, drawCurrent.y),
+                    width: Math.abs(drawStart.x - drawCurrent.x),
+                    height: Math.abs(drawStart.y - drawCurrent.y)
+                  }}
+                />
+              )}
+
               {/* Bounding boxes overlay */}
               {!outputImage && !showOriginal && imgNaturalSize && (
                 <div className="absolute inset-0 z-10 pointer-events-none">
                   {regions.map(r => {
-                    // Position boxes relative to the rendered image
                     const renderedLeft = r.x * sx;
                     const renderedTop = r.y * sy;
                     const renderedW = r.w * sx;
@@ -217,6 +265,18 @@ export default function ImageProcessor() {
                         <div className="absolute -top-6 left-0 bg-indigo-700 text-[9px] text-white px-1.5 py-0.5 rounded opacity-0 group-hover/box:opacity-100 whitespace-nowrap z-20 pointer-events-none">
                           {r.text} ({Math.round(r.confidence * 100)}%)
                         </div>
+                        {/* Remove button for manual regions */}
+                        {r.id.startsWith("manual-") && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRegions(prev => prev.filter(reg => reg.id !== r.id));
+                            }}
+                            className="absolute -top-2 -right-2 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/box:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3 text-white" />
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -297,8 +357,20 @@ export default function ImageProcessor() {
                 </button>
                 <button
                   disabled={detecting || processing}
+                  onClick={() => setManualMode(!manualMode)}
+                  className={cn(
+                    "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                    manualMode 
+                      ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20" 
+                      : "bg-zinc-800 border-white/5 text-zinc-500 hover:border-white/20"
+                  )}
+                >
+                  {manualMode ? "Drawing Off" : "Draw Mask"}
+                </button>
+                <button
+                  disabled={detecting || processing}
                   onClick={() => file && detectText(file)}
-                  className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  className="flex-1 py-2.5 bg-zinc-800 border border-white/5 hover:border-white/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                 >
                   Rescan
                 </button>

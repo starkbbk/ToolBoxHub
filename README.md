@@ -8,23 +8,15 @@
 
 ## 🚀 Core Features
 
-### 🎬 ClipMaster (AI Video Suite)
-Extract viral-ready clips from any video using cutting-edge AI.
-- **AI Transcription**: Automatic speech-to-text using `faster-whisper`.
-- **Intelligent Analysis**: Automatic clip extraction based on viral potential (Qwen-2.5 72B).
-- **Pro Dashboard**: Frame-accurate seeking, keyboard shortcuts, and filtering.
-- **Modular Export**: Export to CSV, JSON, or SRT formats.
-
-### 📄 PDF Converter (Professional Grade)
-The only PDF tool you'll need for daily document workflows.
-- **Convert to Image**: High-resolution page extraction (PNG).
-- **Extract Text**: Full OCR/Text mining for data recovery.
-- **Merge & Split**: Combine multiple documents or extract specific ranges.
-- **Live Preview**: Real-time status tracking for large conversion jobs.
+### 🪄 Text Remover (AI Inpainting)
+Restore your media by surgically removing unwanted text, watermarks, or overlays.
+- **AI Inpainting**: Reconstructs background textures using OpenCV's Deep Telea algorithm.
+- **Smart Banner Detection**: Automatically detects and encompasses text background bars, icons, and containers.
+- **Manual Mask Tool**: Pixel-perfect manual drawing tool for custom removal regions.
+- **Video & Thumbnail Support**: Professional-grade cleanup for video frames and social media thumbnails.
 
 ### 🕒 Coming Soon
 - **🖼️ Image Compressor**: Lossless and lossy batch compression.
-- **🎙️ Audio Transcriber**: Dedicated high-fidelity transcription for audio files.
 - **🔍 SEO Analyzer**: Instant meta-data and performance auditing.
 
 ---

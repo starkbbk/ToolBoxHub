@@ -50,6 +50,7 @@ export default function VideoProcessor() {
   const [activeMask, setActiveMask] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawStart, setDrawStart] = useState<{ x: number, y: number } | null>(null);
+  const [manualMode, setManualMode] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -106,7 +107,7 @@ export default function VideoProcessor() {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (!canvasRef.current || outputVideo || processing) return;
+    if (!manualMode || !canvasRef.current || outputVideo || processing) return;
     const rect = canvasRef.current.getBoundingClientRect();
     setIsDrawing(true);
     setDrawStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
@@ -312,7 +313,28 @@ export default function VideoProcessor() {
                   }
                </div>
                <div className="space-y-3 pt-4 border-t border-white/5">
-                  <button disabled={isDetecting || processing || !!outputVideo} onClick={autoDetectText} className="w-full py-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5"><Sparkles className="h-3.5 w-3.5 text-indigo-400" />Auto-Detect All Text</button>
+                  <div className="flex gap-2">
+                    <button 
+                      disabled={isDetecting || processing || !!outputVideo} 
+                      onClick={() => setManualMode(!manualMode)} 
+                      className={cn(
+                        "flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                        manualMode 
+                          ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20" 
+                          : "bg-zinc-800 border-white/5 text-zinc-500 hover:border-white/20"
+                      )}
+                    >
+                      {manualMode ? "Drawing On" : "Draw Mask"}
+                    </button>
+                    <button 
+                      disabled={isDetecting || processing || !!outputVideo} 
+                      onClick={autoDetectText} 
+                      className="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+                      Auto-AI
+                    </button>
+                  </div>
                   {!outputVideo ? (
                     <button disabled={processing || masks.length === 0} onClick={processVideo} className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white rounded-[1.5rem] font-black tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 shadow-2xl shadow-indigo-600/30">{processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}Process HQ Video</button>
                   ) : (

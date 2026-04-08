@@ -12,10 +12,10 @@ import {
   Eye,
   X
 } from "lucide-react";
-import { createWorker } from "tesseract.js";
+import { toast } from "sonner";
 import PDFDropzone from "../pdf-converter/PDFDropzone";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import api from "@/lib/api";
 
 export default function ThumbnailCleaner() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,6 +23,8 @@ export default function ThumbnailCleaner() {
   const [processing, setProcessing] = useState(false);
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const handleFileSelected = (files: File[]) => {
     if (files.length > 0) {
@@ -33,91 +35,45 @@ export default function ThumbnailCleaner() {
   };
 
   const cleanThumbnail = async () => {
-    if (!file || !imagePreview) return;
+    if (!file) return;
     setProcessing(true);
 
     try {
-      const worker = await createWorker('eng');
-      const result = await worker.recognize(file);
-      const data = result.data as any;
-      const words = data.words || [];
+      // 1. Detect text regions using backend EasyOCR
+      const detectData = new FormData();
+      detectData.append("image", file);
       
-      const regions = words
-        .filter((w: any) => w.confidence > 40)
-        .map((word: any) => ({
-          x: word.bbox.x0,
-          y: word.bbox.y0,
-          w: word.bbox.x1 - word.bbox.x0,
-          h: word.bbox.y1 - word.bbox.y0
-        }));
+      const detectRes = (await api.post("/api/text-remover/detect", detectData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })) as any;
 
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-      img.src = imagePreview;
+      if (!detectRes.success) throw new Error("Detection failed");
+      const regions = detectRes.data.regions;
 
-      await new Promise((resolve) => {
-        img.onload = () => {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx?.drawImage(img, 0, 0);
-          resolve(null);
-        };
-      });
-
-      if (!ctx) return;
-
-      // Sort regions by area descending to handle large background text first
-      regions.sort((a: any, b: any) => (b.w * b.h) - (a.w * a.h));
-
-      for (const r of regions) {
-        // Expand mask slightly for cleaner blending
-        const margin = Math.max(5, Math.floor(r.h * 0.1)); 
-        const nx = Math.max(0, r.x - margin);
-        const ny = Math.max(0, r.y - margin);
-        const nw = r.w + (margin * 2);
-        const nh = r.h + (margin * 2);
-
-        // Advanced Inpaint Mockup: Multi-point background sampling
-        ctx.fillStyle = getSmartBackground(ctx, nx, ny, nw, nh);
-        ctx.fillRect(r.x, r.y, r.w, r.h);
-        
-        // Add artificial grain to prevent "too smooth" patches
-        addGrain(ctx, r.x, r.y, r.w, r.h);
+      if (regions.length === 0) {
+        toast.info("No text detected to remove.");
+        setProcessing(false);
+        return;
       }
 
-      await worker.terminate();
-      setOutputImage(canvas.toDataURL("image/png"));
-      toast.success("AI Thumbnail cleanup complete!");
+      // 2. Remove all detected text using backend inpainting
+      const removeData = new FormData();
+      removeData.append("image", file);
+      removeData.append("regions", JSON.stringify(regions));
+
+      const removeRes = (await api.post("/api/text-remover/image", removeData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })) as any;
+
+      if (!removeRes.success) throw new Error("Removal failed");
+
+      setOutputImage(`${apiUrl}${removeRes.data.output_path}`);
+      toast.success("Thumbnail cleaned with AI inpainting!");
     } catch (err) {
-      toast.error("Cleanup failed.");
+      console.error(err);
+      toast.error("Cleanup failed. Check backend connection.");
     } finally {
       setProcessing(false);
-    }
-  };
-
-  const getSmartBackground = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
-    const data = ctx.getImageData(x, y, w, h).data;
-    const samples: [number, number, number][] = [];
-    
-    // Sample from edges of existing box for better gradient matching
-    for (let i = 0; i < data.length; i += 80) {
-       samples.push([data[i], data[i+1], data[i+2]]);
-    }
-    
-    // Find most common cluster
-    const avg = samples.reduce((acc, curr) => [acc[0]+curr[0], acc[1]+curr[1], acc[2]+curr[2]], [0,0,0])
-      .map(v => Math.floor(v / samples.length));
-      
-    return `rgb(${avg[0]}, ${avg[1]}, ${avg[2]})`;
-  };
-
-  const addGrain = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
-    for (let i = 0; i < 50; i++) {
-        const gx = x + Math.random() * w;
-        const gy = y + Math.random() * h;
-        ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.03})`;
-        ctx.fillRect(gx, gy, 1, 1);
     }
   };
 

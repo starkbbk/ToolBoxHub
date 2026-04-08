@@ -31,11 +31,12 @@ async def detect_text_regions(
 @router.post("/image")
 async def remove_text_image(
     image: UploadFile = File(...),
-    mask: UploadFile = File(...),
-    radius: int = Form(3)
+    regions: str = Form(...), # JSON string of regions: [{"x": 10, "y": 20, "w": 30, "h": 40}, ...]
+    radius: int = Form(10)
 ):
     """
-    Remove text from an image using a provided mask.
+    Remove text from an image by providing the region coordinates.
+    The backend generates a dilated mask for seamless inpainting.
     """
     try:
         # Save uploads
@@ -44,20 +45,16 @@ async def remove_text_image(
         os.makedirs(upload_dir, exist_ok=True)
         
         image_path = os.path.join(upload_dir, "original.png")
-        mask_path = os.path.join(upload_dir, "mask.png")
         output_path = os.path.join(upload_dir, "cleaned.png")
         
         with open(image_path, "wb") as f:
             f.write(await image.read())
-        with open(mask_path, "wb") as f:
-            f.write(await mask.read())
             
-        # Process
-        inpainter.inpaint_image(image_path, mask_path, output_path, radius)
+        mask_regions = json.loads(regions)
+            
+        # Process using the improved region-based inpainter
+        inpainter.inpaint_image(image_path, mask_regions, output_path, radius)
         
-        # In a real app we'd return a URL or the file. 
-        # For now, we'll return the relative path or base64 if small.
-        # Let's return the file metadata and path.
         return success_response({
             "job_id": job_id,
             "output_path": f"/api/text-remover/download/{job_id}/cleaned.png"

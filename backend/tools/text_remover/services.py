@@ -20,66 +20,130 @@ class OCRService:
     @staticmethod
     def detect_text(image_bytes: bytes) -> List[dict]:
         """
-        Detect text regions in an image using EasyOCR.
-        Returns list of dicts with keys: x, y, w, h, text, confidence
+        Detect text regions and expand them to capture the full background banner/overlay.
         """
         reader = get_ocr_reader()
-        
-        # Decode image from bytes
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
         if img is None:
             return []
         
-        # Run OCR
+        h, w = img.shape[:2]
         results = reader.readtext(img)
         
-        regions = []
+        raw_regions = []
         for (bbox, text, confidence) in results:
-            if confidence < 0.3:  # Filter low-confidence detections
+            if confidence < 0.2:
                 continue
-            
-            # bbox is [[x1,y1],[x2,y1],[x2,y2],[x1,y2]]
             xs = [pt[0] for pt in bbox]
             ys = [pt[1] for pt in bbox]
-            x = int(min(xs))
-            y = int(min(ys))
-            w = int(max(xs) - min(xs))
-            h = int(max(ys) - min(ys))
-            
-            regions.append({
-                "x": x, "y": y, "w": w, "h": h,
-                "text": text,
-                "confidence": round(confidence, 3)
+            raw_regions.append({
+                "x": int(min(xs)), "y": int(min(ys)),
+                "w": int(max(xs) - min(xs)), "h": int(max(ys) - min(ys)),
+                "text": text, "confidence": round(confidence, 3)
             })
+
+        if not raw_regions:
+            return []
+
+        # Group regions that are part of the same overlay (spatially close)
+        groups = []
+        # Sort by y, then x for consistent grouping
+        raw_regions.sort(key=lambda r: (r['y'], r['x']))
         
-        return regions
+        for r in raw_regions:
+            found_group = False
+            for group in groups:
+                # Calculate group bounds
+                gx_min = min(rg['x'] for rg in group)
+                gy_min = min(rg['y'] for rg in group)
+                gx_max = max(rg['x'] + rg['w'] for rg in group)
+                gy_max = max(rg['y'] + rg['h'] for rg in group)
+                
+                # Proximity thresholds
+                v_threshold = 50 # Vertical pixels
+                h_threshold = 100 # Horizontal pixels
+                
+                # Check if region is vertically close and horizontally overlapping or within h_threshold
+                v_close = (r['y'] - gy_max) < v_threshold and (gy_min - (r['y'] + r['h'])) < v_threshold
+                h_close = (r['x'] - gx_max) < h_threshold and (gx_min - (r['x'] + r['w'])) < h_threshold
+                
+                if v_close and h_close:
+                    group.append(r)
+                    found_group = True
+                    break
+            if not found_group:
+                groups.append([r])
+
+        expanded_regions = []
+        for i, group in enumerate(groups):
+            min_x = min(r['x'] for r in group)
+            min_y = min(r['y'] for r in group)
+            max_x = max(r['x'] + r['w'] for r in group)
+            max_y = max(r['y'] + r['h'] for r in group)
+            
+            # Expanded Banner Logic:
+            # Add generous padding to capture the semi-transparent background bar, icons, and rounded edges
+            # Users report banners are often 50-80px wider than text.
+            padding_x = 60
+            padding_y = 30
+            
+            ex = max(0, min_x - padding_x)
+            ey = max(0, min_y - padding_y)
+            ew = min(w - ex, (max_x - min_x) + (padding_x * 2))
+            eh = min(h - ey, (max_y - min_y) + (padding_y * 2))
+            
+            expanded_regions.append({
+                "id": f"group-{i}",
+                "x": ex, "y": ey, "w": ew, "h": eh,
+                "text": " | ".join([r['text'] for r in group]),
+                "confidence": max(r['confidence'] for r in group),
+                "is_group": True
+            })
+
+        return expanded_regions
 
 
 class InpainterService:
     @staticmethod
-    def inpaint_image(image_path: str, mask_path: str, output_path: str, radius: int = 3):
+    def _dilate_mask(mask: np.ndarray, kernel_size: int = 5) -> np.ndarray:
         """
-        Inpaint an image using the Telea algorithm.
+        Dilate the mask to cover anti-aliasing edges and silhouettes.
+        """
+        if kernel_size <= 0:
+            return mask
+        kernel = np.ones((kernel_size, kernel_size), np.uint8)
+        return cv2.dilate(mask, kernel, iterations=1)
+
+    @staticmethod
+    def inpaint_image(image_path: str, regions: List[dict], output_path: str, inpaint_radius: int = 10):
+        """
+        Inpaint an image using the Telea algorithm with mask dilation.
         """
         img = cv2.imread(image_path)
-        mask = cv2.imread(mask_path, 0) # Grayscale mask
+        if img is None:
+            raise ValueError("Could not read image")
+            
+        h, w = img.shape[:2]
         
-        # Ensure mask and image are same size
-        if img.shape[:2] != mask.shape[:2]:
-            mask = cv2.resize(mask, (img.shape[1], img.shape[0]))
+        # Create binary mask from regions
+        mask = np.zeros((h, w), dtype=np.uint8)
+        for r in regions:
+            x, y, rw, rh = int(r['x']), int(r['y']), int(r['w']), int(r['h'])
+            cv2.rectangle(mask, (x, y), (x + rw, y + rh), 255, -1)
+            
+        # Dilate mask to ensure edges are covered
+        mask = InpainterService._dilate_mask(mask, kernel_size=7)
 
-        # Telea algorithm is usually better for text removal
-        result = cv2.inpaint(img, mask, radius, cv2.INPAINT_TELEA)
+        # Apply inpainting
+        result = cv2.inpaint(img, mask, inpaint_radius, cv2.INPAINT_TELEA)
         cv2.imwrite(output_path, result)
         return output_path
 
     @staticmethod
     def inpaint_video(video_path: str, mask_regions: List[dict], output_path: str, on_progress=None):
         """
-        Inpaint a video by processing it frame by frame.
-        mask_regions: List of {'x', 'y', 'w', 'h', 'start_time', 'end_time'}
+        Inpaint a video by processing it frame by frame with mask dilation.
         """
         # 1. Create temp directory for frames
         temp_dir = tempfile.mkdtemp()
@@ -100,7 +164,8 @@ class InpainterService:
             # 3. Get video info for re-encoding
             probe = ffmpeg.probe(video_path)
             video_info = next(s for s in probe['streams'] if s['codec_type'] == 'video')
-            fps = eval(video_info['avg_frame_rate'])
+            fps_str = video_info['avg_frame_rate']
+            fps = eval(fps_str) if '/' in fps_str else float(fps_str)
             
             frame_files = sorted(os.listdir(frames_dir))
             total_frames = len(frame_files)
@@ -109,22 +174,27 @@ class InpainterService:
             for i, frame_name in enumerate(frame_files):
                 frame_path = os.path.join(frames_dir, frame_name)
                 frame = cv2.imread(frame_path)
+                if frame is None:
+                    continue
                 h, w = frame.shape[:2]
                 
                 # Create mask for this frame
                 mask = np.zeros((h, w), dtype=np.uint8)
                 current_time = i / fps
                 
+                has_active_regions = False
                 for region in mask_regions:
-                    # Check if region is active at this time
                     if region.get('start_time', 0) <= current_time <= region.get('end_time', float('inf')):
                         x, y = int(region['x']), int(region['y'])
                         rw, rh = int(region['w']), int(region['h'])
                         cv2.rectangle(mask, (x, y), (x + rw, y + rh), 255, -1)
+                        has_active_regions = True
                 
-                # Inpaint
-                if np.any(mask > 0):
-                    cleaned_frame = cv2.inpaint(frame, mask, 3, cv2.INPAINT_TELEA)
+                # Inpaint if there are active regions
+                if has_active_regions:
+                    # Dilate mask for videos too
+                    mask = InpainterService._dilate_mask(mask, kernel_size=7)
+                    cleaned_frame = cv2.inpaint(frame, mask, 10, cv2.INPAINT_TELEA)
                 else:
                     cleaned_frame = frame
                 
@@ -134,14 +204,19 @@ class InpainterService:
                     on_progress(int(((i + 1) / total_frames) * 100))
 
             # 5. Re-encode video with original audio
-            audio = ffmpeg.input(video_path).audio
-            (
-                ffmpeg
-                .input(os.path.join(cleaned_dir, "frame_%05d.png"), framerate=fps)
-                .output(audio, output_path, vcodec='libx264', pix_fmt='yuv420p', acodec='copy')
-                .overwrite_output()
-                .run(quiet=True)
-            )
+            audio = None
+            try:
+                audio = ffmpeg.input(video_path).audio
+            except:
+                pass # No audio stream
+
+            stream = ffmpeg.input(os.path.join(cleaned_dir, "frame_%05d.png"), framerate=fps)
+            if audio:
+                stream = ffmpeg.output(stream, audio, output_path, vcodec='libx264', pix_fmt='yuv420p', acodec='copy')
+            else:
+                stream = ffmpeg.output(stream, output_path, vcodec='libx264', pix_fmt='yuv420p')
+            
+            stream.overwrite_output().run(quiet=True)
 
             return output_path
 
