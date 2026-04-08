@@ -60,8 +60,8 @@ export default function PDFToExcel() {
 
         // Get unique Y coordinates (descending)
         const yCoords: number[] = [];
-        rawItems.forEach(item => {
-          if (!yCoords.some(y => Math.abs(y - item.y) < rowTolerance)) {
+        rawItems.forEach((item: any) => {
+          if (!yCoords.some((y: number) => Math.abs(y - item.y) < rowTolerance)) {
             yCoords.push(item.y);
           }
         });
@@ -69,8 +69,8 @@ export default function PDFToExcel() {
 
         // Get unique X coordinates (columns)
         const xCoords: number[] = [];
-        rawItems.forEach(item => {
-          if (!xCoords.some(x => Math.abs(x - item.x) < colTolerance)) {
+        rawItems.forEach((item: any) => {
+          if (!xCoords.some((x: number) => Math.abs(x - item.x) < colTolerance)) {
             xCoords.push(item.x);
           }
         });
@@ -81,9 +81,9 @@ export default function PDFToExcel() {
           Array(xCoords.length).fill("")
         );
 
-        rawItems.forEach(item => {
-          const rowIndex = yCoords.findIndex(y => Math.abs(y - item.y) < rowTolerance);
-          const colIndex = xCoords.findIndex(x => Math.abs(x - item.x) < colTolerance);
+        rawItems.forEach((item: any) => {
+          const rowIndex = yCoords.findIndex((y: number) => Math.abs(y - item.y) < rowTolerance);
+          const colIndex = xCoords.findIndex((x: number) => Math.abs(x - item.x) < colTolerance);
           if (rowIndex !== -1 && colIndex !== -1) {
             // Append if cell already has text (handle multi-word cells)
             pageGrid[rowIndex][colIndex] = (pageGrid[rowIndex][colIndex] + " " + item.str).trim();

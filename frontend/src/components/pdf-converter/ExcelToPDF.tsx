@@ -57,7 +57,7 @@ export default function ExcelToPDF() {
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [79, 70, 229] }, // Indigo primary color
         margin: { top: 20 },
-        didDrawPage: (data) => {
+        didDrawPage: (data: any) => {
           doc.setFontSize(10);
           doc.text(`Sheet: ${firstSheetName}`, data.settings.margin.left, 10);
         }

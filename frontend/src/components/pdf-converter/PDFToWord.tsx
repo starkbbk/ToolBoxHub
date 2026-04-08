@@ -76,14 +76,14 @@ export default function PDFToWord() {
         // Sort lines from top to bottom
         lineGroups.sort((a, b) => b.y - a.y);
 
-        lineGroups.forEach(group => {
+        lineGroups.forEach((group: any) => {
           // Sort items in line from left to right
-          group.items.sort((a, b) => a.x - b.x);
+          group.items.sort((a: any, b: any) => a.x - b.x);
           
           const runs: TextRun[] = [];
           let currentX = 0;
 
-          group.items.forEach((item, idx) => {
+          group.items.forEach((item: any, idx: number) => {
             // Add spacing between runs to maintain horizontal layout
             // Docx doesn't support absolute X placement easily in a standard paragraph, 
             // so we use non-breaking spaces to simulate the gap.
