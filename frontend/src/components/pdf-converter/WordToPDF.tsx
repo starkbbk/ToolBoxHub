@@ -132,14 +132,14 @@ export default function WordToPDF() {
               <div className="flex flex-col items-center gap-6">
                 <div className="flex items-center gap-8">
                   <div className="flex flex-col items-center gap-2">
-                     <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                     <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]">
                         <FileText className="h-8 w-8" />
                      </div>
                      <span className="text-xs font-bold text-zinc-500 uppercase">Word</span>
                   </div>
                   <ArrowRight className="h-6 w-6 text-zinc-700" />
                   <div className="flex flex-col items-center gap-2">
-                     <div className="p-4 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)]">
+                     <div className="p-4 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
                         <FileText className="h-8 w-8" />
                      </div>
                      <span className="text-xs font-bold text-zinc-500 uppercase">PDF</span>

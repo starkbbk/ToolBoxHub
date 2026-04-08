@@ -107,11 +107,11 @@ export default function PDFScan() {
   }, []);
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-250px)]">
         
         {/* Left Column: Camera View */}
-        <div className="relative group rounded-[40px] bg-zinc-950 border border-white/5 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
+        <div className="relative group rounded-3xl bg-zinc-950/50 border border-white/5 backdrop-blur-xl overflow-hidden flex flex-col items-center justify-center shadow-2xl">
            {!isCameraStarted ? (
              <div className="text-center space-y-6 p-12">
                 <div className="h-24 w-24 rounded-[32px] bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto border border-indigo-500/20 shadow-[0_0_30px_rgba(79,70,229,0.1)]">

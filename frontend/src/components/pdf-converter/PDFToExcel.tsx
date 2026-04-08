@@ -41,39 +41,71 @@ export default function PDFToExcel() {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
       const numPages = pdf.numPages;
-      const allData: any[][] = [];
+      const allRows: any[][] = [];
 
       for (let i = 1; i <= numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         
-        // Logical table extraction based on Y coordinates
-        const rows: { [key: number]: { x: number, str: string }[] } = {};
+        // 1. Cluster items into unique Y (rows) and X (columns)
+        const rowTolerance = 8;
+        const colTolerance = 15;
         
-        textContent.items.forEach((item: any) => {
-          const y = Math.round(item.transform[5]);
-          const x = Math.round(item.transform[4]);
-          if (!rows[y]) rows[y] = [];
-          rows[y].push({ x, str: item.str });
-        });
+        const rawItems = textContent.items.map((item: any) => ({
+          str: item.str,
+          x: item.transform[4],
+          y: item.transform[5],
+          width: item.width
+        }));
 
-        // Sort rows by Y (top to bottom)
-        const sortedY = Object.keys(rows).map(Number).sort((a, b) => b - a);
-        
-        sortedY.forEach(y => {
-          // Sort items in row by X (left to right)
-          const rowItems = rows[y].sort((a, b) => a.x - b.x);
-          const rowStrings = rowItems.map(item => item.str.trim()).filter(s => s);
-          if (rowStrings.length > 0) {
-            allData.push(rowStrings);
+        // Get unique Y coordinates (descending)
+        const yCoords: number[] = [];
+        rawItems.forEach(item => {
+          if (!yCoords.some(y => Math.abs(y - item.y) < rowTolerance)) {
+            yCoords.push(item.y);
+          }
+        });
+        yCoords.sort((a, b) => b - a);
+
+        // Get unique X coordinates (columns)
+        const xCoords: number[] = [];
+        rawItems.forEach(item => {
+          if (!xCoords.some(x => Math.abs(x - item.x) < colTolerance)) {
+            xCoords.push(item.x);
+          }
+        });
+        xCoords.sort((a, b) => a - b);
+
+        // 2. Map items to grid cells
+        const pageGrid: string[][] = Array.from({ length: yCoords.length }, () => 
+          Array(xCoords.length).fill("")
+        );
+
+        rawItems.forEach(item => {
+          const rowIndex = yCoords.findIndex(y => Math.abs(y - item.y) < rowTolerance);
+          const colIndex = xCoords.findIndex(x => Math.abs(x - item.x) < colTolerance);
+          if (rowIndex !== -1 && colIndex !== -1) {
+            // Append if cell already has text (handle multi-word cells)
+            pageGrid[rowIndex][colIndex] = (pageGrid[rowIndex][colIndex] + " " + item.str).trim();
           }
         });
 
+        allRows.push(...pageGrid);
         setProgress(Math.round((i / numPages) * 90) + 5);
       }
 
-      // Create Workbook
-      const worksheet = XLSX.utils.aoa_to_sheet(allData);
+      // 3. Create Workbook
+      const worksheet = XLSX.utils.aoa_to_sheet(allRows);
+      
+      // Basic auto-width detection
+      const wscols = [];
+      if (allRows.length > 0) {
+        for (let i = 0; i < allRows[0].length; i++) {
+           wscols.push({ wch: 20 });
+        }
+        worksheet["!cols"] = wscols;
+      }
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
       
@@ -81,10 +113,10 @@ export default function PDFToExcel() {
       XLSX.writeFile(workbook, `${file.name.replace(".pdf", "")}.xlsx`);
       
       setProgress(100);
-      toast.success("PDF data exported to Excel successfully!");
+      toast.success("Structural Excel export complete!");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to convert PDF to Excel");
+      toast.error("Failed to map PDF table to Excel");
     } finally {
       setProcessing(false);
       setProgress(0);
@@ -97,7 +129,8 @@ export default function PDFToExcel() {
         <PDFDropzone 
           onFilesSelected={handleFileSelected} 
           multiple={false} 
-          label="Select a PDF to extract data to Excel" 
+          accept={{ "application/pdf": [".pdf"] }}
+          label="Select a PDF with tables to convert to Excel" 
         />
       ) : (
         <div className="space-y-8">
@@ -118,7 +151,6 @@ export default function PDFToExcel() {
             </button>
           </div>
 
-          {/* Action Area */}
           <div className="flex flex-col items-center justify-center p-12 bg-zinc-900/40 rounded-3xl border border-white/5 border-dashed">
             {processing ? (
               <div className="text-center space-y-6 w-full max-w-md">
@@ -129,7 +161,7 @@ export default function PDFToExcel() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-white font-medium">Parsing tabular data...</p>
+                  <p className="text-white font-medium">Detecting table grid...</p>
                   <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 transition-all duration-300"
@@ -142,7 +174,7 @@ export default function PDFToExcel() {
               <div className="flex flex-col items-center gap-6">
                 <div className="flex items-center gap-8">
                   <div className="flex flex-col items-center gap-2">
-                     <div className="p-4 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                     <div className="p-4 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)]">
                         <ArrowRight className="h-8 w-8 rotate-90" />
                      </div>
                      <span className="text-xs font-bold text-zinc-500 uppercase">PDF</span>
@@ -161,7 +193,7 @@ export default function PDFToExcel() {
                   className="px-10 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                 >
                   <FileSpreadsheet className="h-5 w-5" />
-                  Convert to Excel
+                  Convert to Excel (.xlsx)
                 </button>
               </div>
             )}
@@ -169,7 +201,7 @@ export default function PDFToExcel() {
           
           <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-center">
              <p className="text-xs text-emerald-300 leading-relaxed italic">
-               Note: Best results for PDFs with clear table borders. Layout detection might vary for complex documents.
+               Note: This tool reconstructs the spreadsheet based on text item alignment. Complex nested tables may vary.
              </p>
           </div>
         </div>

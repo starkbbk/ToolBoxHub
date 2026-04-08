@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import * as pdfjs from "pdfjs-dist/build/pdf";
-import { Document, Packer, Paragraph, TextRun } from "docx";
+import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
 import { 
   FileText, 
   Download, 
@@ -46,35 +46,75 @@ export default function PDFToWord() {
       for (let i = 1; i <= numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
+        const viewport = page.getViewport({ scale: 1.0 });
         
-        // Group text items by their Y coordinate to form lines
-        const lines: { [key: number]: string[] } = {};
+        // Group text items by their Y coordinate (Line grouping)
+        // We use a small tolerance for Y coordinates (e.g. 5 points)
+        const TOLERANCE = 5;
+        const lineGroups: { y: number; items: any[] }[] = [];
+
         textContent.items.forEach((item: any) => {
-          const y = Math.round(item.transform[5]);
-          if (!lines[y]) lines[y] = [];
-          lines[y].push(item.str);
+          const y = item.transform[5];
+          const x = item.transform[4];
+          const fontSize = Math.abs(item.transform[0]);
+          const fontName = item.fontName || "";
+          
+          let foundGroup = lineGroups.find(g => Math.abs(g.y - y) < TOLERANCE);
+          if (!foundGroup) {
+            foundGroup = { y, items: [] };
+            lineGroups.push(foundGroup);
+          }
+          foundGroup.items.push({ 
+            str: item.str, 
+            x, 
+            fontSize, 
+            bold: fontName.toLowerCase().includes("bold") || fontName.toLowerCase().includes("black"),
+            italic: fontName.toLowerCase().includes("italic") || fontName.toLowerCase().includes("oblique")
+          });
         });
 
         // Sort lines from top to bottom
-        const sortedY = Object.keys(lines).map(Number).sort((a, b) => b - a);
-        
-        sortedY.forEach(y => {
-          const lineText = lines[y].join(" ");
-          if (lineText.trim()) {
+        lineGroups.sort((a, b) => b.y - a.y);
+
+        lineGroups.forEach(group => {
+          // Sort items in line from left to right
+          group.items.sort((a, b) => a.x - b.x);
+          
+          const runs: TextRun[] = [];
+          let currentX = 0;
+
+          group.items.forEach((item, idx) => {
+            // Add spacing between runs to maintain horizontal layout
+            // Docx doesn't support absolute X placement easily in a standard paragraph, 
+            // so we use non-breaking spaces to simulate the gap.
+            const gap = idx === 0 ? item.x : item.x - currentX;
+            const spaces = " ".repeat(Math.max(0, Math.floor(gap / 4))); // Rough conversion points -> spaces
+
+            runs.push(new TextRun({
+              text: spaces + item.str,
+              bold: item.bold,
+              italics: item.italic,
+              size: item.fontSize * 2, // docx uses half-points
+            }));
+            
+            // Approximate width of the text to update currentX
+            currentX = item.x + (item.str.length * (item.fontSize * 0.5));
+          });
+
+          if (runs.length > 0) {
             paragraphs.push(new Paragraph({
-              children: [new TextRun(lineText)],
-              spacing: { after: 200 }
+              children: runs,
+              spacing: { before: 100, after: 100 }
             }));
           }
         });
 
-        // Add page break after each page except the last
+        // Add page break
         if (i < numPages) {
-          // Note: docx uses page breaks differently, but we'll add a spacer for now
-          paragraphs.push(new Paragraph({ children: [new TextRun("")] }));
+          paragraphs.push(new Paragraph({ children: [new TextRun({ text: "", break: 1 })] }));
         }
 
-        setProgress(Math.round((i / numPages) * 80) + 10);
+        setProgress(Math.round((i / numPages) * 85) + 5);
       }
 
       const doc = new Document({
@@ -88,10 +128,10 @@ export default function PDFToWord() {
       saveAs(blob, `${file.name.replace(".pdf", "")}.docx`);
       
       setProgress(100);
-      toast.success("PDF converted to Word successfully!");
+      toast.success("High-fidelity Word conversion complete!");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to convert PDF to Word");
+      toast.error("Enhanced conversion failed");
     } finally {
       setProcessing(false);
       setProgress(0);
@@ -104,7 +144,8 @@ export default function PDFToWord() {
         <PDFDropzone 
           onFilesSelected={handleFileSelected} 
           multiple={false} 
-          label="Select a PDF document to convert to Word" 
+          accept={{ "application/pdf": [".pdf"] }}
+          label="Select a PDF document for High-Fidelity Word Conversion" 
         />
       ) : (
         <div className="space-y-8">
@@ -125,7 +166,6 @@ export default function PDFToWord() {
             </button>
           </div>
 
-          {/* Action Area */}
           <div className="flex flex-col items-center justify-center p-12 bg-zinc-900/40 rounded-3xl border border-white/5 border-dashed">
             {processing ? (
               <div className="text-center space-y-6 w-full max-w-md">
@@ -136,7 +176,7 @@ export default function PDFToWord() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-white font-medium">Extracting text & formatting...</p>
+                  <p className="text-white font-medium">Reconstructing layout...</p>
                   <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-rose-500 transition-all duration-300"
@@ -168,15 +208,15 @@ export default function PDFToWord() {
                   className="px-10 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(244,63,94,0.3)]"
                 >
                   <Download className="h-5 w-5" />
-                  Convert to Word
+                  Convert to Word (.docx)
                 </button>
               </div>
             )}
           </div>
           
-          <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/10 text-center">
-             <p className="text-xs text-rose-300 leading-relaxed italic">
-               Note: This tool extracts selectable text. Scanned PDFs without a text layer need the "OCR PDF" tool instead.
+          <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/10 text-center">
+             <p className="text-xs text-orange-300 leading-relaxed italic">
+               Note: This engine performs positional reconstruction to mirror the original PDF's layout as closely as possible.
              </p>
           </div>
         </div>

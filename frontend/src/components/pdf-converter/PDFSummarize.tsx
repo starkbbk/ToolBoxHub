@@ -89,7 +89,7 @@ export default function PDFSummarize() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {!file ? (
         <PDFDropzone onFilesSelected={handleFileSelected} multiple={false} label="Select a PDF to summarize with AI" />
       ) : (
@@ -111,7 +111,7 @@ export default function PDFSummarize() {
            {!summary && !processing && (
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Options Panel */}
-                <div className="md:col-span-1 p-8 rounded-3xl border border-white/5 bg-zinc-900/40 space-y-6">
+                <div className="md:col-span-1 p-8 rounded-3xl border border-white/5 bg-zinc-950/50 backdrop-blur-xl space-y-6">
                    <div className="flex items-center gap-2 text-sm font-bold text-zinc-400 uppercase tracking-widest">
                       <Settings2 className="h-4 w-4" />
                       Settings

@@ -129,7 +129,7 @@ export default function ExcelToPDF() {
               <div className="flex flex-col items-center gap-6">
                 <div className="flex items-center gap-8">
                   <div className="flex flex-col items-center gap-2">
-                     <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                     <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
                         <Table className="h-8 w-8" />
                      </div>
                      <span className="text-xs font-bold text-zinc-500 uppercase">Excel</span>
