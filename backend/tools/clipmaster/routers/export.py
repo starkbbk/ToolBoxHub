@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import os
 
-from backend.database import get_db
-from backend.shared.response import error_response
-from backend.tools.clipmaster.models.clip import Clip
-from backend.tools.clipmaster.services.clip_exporter import export_csv, export_json, export_srt
+from database import get_db
+from shared.response import error_response
+from tools.clipmaster.models.clip import Clip
+from tools.clipmaster.services.clip_exporter import export_csv, export_json, export_srt
 
 router = APIRouter()
 

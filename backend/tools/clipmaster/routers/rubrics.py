@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 
-from backend.database import get_db
-from backend.shared.response import success_response, error_response
-from backend.tools.clipmaster.models.rubric import Rubric
-from backend.tools.clipmaster.schemas.rubric import RubricCreate, RubricUpdate, RubricResponse
+from database import get_db
+from shared.response import success_response, error_response
+from tools.clipmaster.models.rubric import Rubric
+from tools.clipmaster.schemas.rubric import RubricCreate, RubricUpdate, RubricResponse
 
 router = APIRouter()
 

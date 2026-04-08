@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from backend.database import get_db
-from backend.shared.response import success_response, error_response
-from backend.tools.clipmaster.models.clip import Clip
-from backend.tools.clipmaster.schemas.clip import ClipResponse, ClipUpdate
-from backend.tools.clipmaster.utils.time_formatter import timestamp_to_seconds
+from database import get_db
+from shared.response import success_response, error_response
+from tools.clipmaster.models.clip import Clip
+from tools.clipmaster.schemas.clip import ClipResponse, ClipUpdate
+from tools.clipmaster.utils.time_formatter import timestamp_to_seconds
 
 from pydantic import BaseModel
 

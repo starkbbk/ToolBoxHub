@@ -15,7 +15,12 @@ export function useWebSocket(projectId: number) {
   const connect = useCallback(() => {
     if (socketRef.current?.readyState === WebSocket.OPEN) return;
 
-    const socket = new WebSocket(`${WS_URL}/ws/clipmaster/progress/${projectId}`);
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const host = window.location.hostname || "localhost";
+    const finalWsUrl = `${wsProtocol}//${host}:8000/ws/clipmaster/progress/${projectId}`;
+    
+    console.log("Connecting to WebSocket:", finalWsUrl);
+    const socket = new WebSocket(finalWsUrl);
     socketRef.current = socket;
 
     socket.onopen = () => {

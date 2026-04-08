@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 import shutil
 import os
 
-from backend.database import get_db
-from backend.shared.response import success_response, error_response
-from backend.tools.clipmaster.models.project import Project
-from backend.tools.clipmaster.schemas.project import ProjectResponse, ProjectDetailResponse
+from database import get_db
+from shared.response import success_response, error_response
+from tools.clipmaster.models.project import Project
+from tools.clipmaster.schemas.project import ProjectResponse, ProjectDetailResponse
 
 router = APIRouter()
 

@@ -19,13 +19,21 @@ def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
             # Remove ANSI, remove %
             clean_percent = re.sub(r'\x1b\[[0-9;]*m', '', percent_str).replace('%', '')
             try:
-                progress_callback(float(clean_percent))
+                pct = float(clean_percent)
+                print(f"DEBUG: Downloading video: {pct}%")
+                progress_callback(pct)
             except ValueError:
                 pass
 
     ydl_opts = {
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        'outtmpl': os.path.join(output_dir, 'original.%(ext)s'),
+        'format': 'bestaudio/best',
+        'outtmpl': os.path.join(output_dir, 'audio.%(ext)s'),
+        'max_filesize': 26214400,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '5',
+        }],
         'progress_hooks': [hook] if progress_callback else [],
         'quiet': True,
         'no_warnings': True,

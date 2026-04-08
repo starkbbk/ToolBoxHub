@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, JSON, DateTime
 from sqlalchemy.sql import func
-from backend.models.base import Base
+from models.base import Base
 
 class Rubric(Base):
     __tablename__ = "rubrics"

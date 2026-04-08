@@ -3,8 +3,8 @@ import json
 import os
 import tempfile
 from typing import List
-from backend.tools.clipmaster.models.clip import Clip
-from backend.tools.clipmaster.utils.time_formatter import seconds_to_timestamp
+from tools.clipmaster.models.clip import Clip
+from tools.clipmaster.utils.time_formatter import seconds_to_timestamp
 
 def export_csv(clips: List[Clip]) -> str:
     fd, path = tempfile.mkstemp(suffix=".csv")

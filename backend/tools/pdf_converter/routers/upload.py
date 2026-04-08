@@ -2,11 +2,11 @@ import os
 import shutil
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.database import get_db
-from backend.tools.pdf_converter.models.pdf_job import PDFJob
-from backend.tools.pdf_converter.schemas.pdf_job import PDFJobResponse
-from backend.shared.file_utils import generate_uuid_filename
-from backend.config import settings
+from database import get_db
+from tools.pdf_converter.models.pdf_job import PDFJob
+from tools.pdf_converter.schemas.pdf_job import PDFJobResponse
+from shared.file_utils import generate_uuid_filename
+from config import settings
 
 router = APIRouter()
 

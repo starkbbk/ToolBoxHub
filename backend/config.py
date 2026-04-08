@@ -15,10 +15,7 @@ class Settings(BaseSettings):
     openrouter_api_key: str = Field("", env="OPENROUTER_API_KEY")
     openrouter_base_url: str = Field("https://openrouter.ai/api/v1", env="OPENROUTER_BASE_URL")
     ai_model: str = Field("qwen/qwen3.6-plus:free", env="AI_MODEL")
-    
-    whisper_model: str = Field("large-v3", env="WHISPER_MODEL")
-    whisper_device: str = Field("cpu", env="WHISPER_DEVICE")
-    whisper_compute_type: str = Field("int8", env="WHISPER_COMPUTE_TYPE")
+    groq_api_key: str = Field("", env="GROQ_API_KEY")
     
     class Config:
         env_file = ".env"

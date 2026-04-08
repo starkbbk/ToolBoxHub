@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Text, JSON, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from backend.models.base import Base
+from models.base import Base
 
 class Transcript(Base):
     __tablename__ = "transcripts"

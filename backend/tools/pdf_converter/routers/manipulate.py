@@ -1,10 +1,10 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body
 from sqlalchemy.orm import Session
-from backend.database import get_db
-from backend.tools.pdf_converter.models.pdf_job import PDFJob
-from backend.tools.pdf_converter.services.pdf_manipulator import PDFManipulator
-from backend.shared.response import APIResponse
+from database import get_db
+from tools.pdf_converter.models.pdf_job import PDFJob
+from tools.pdf_converter.services.pdf_manipulator import PDFManipulator
+from shared.response import APIResponse
 from typing import List
 
 router = APIRouter()

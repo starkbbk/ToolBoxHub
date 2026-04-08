@@ -3,7 +3,7 @@ import json
 import re
 import asyncio
 from typing import List, Optional, Callable, Dict, Any
-from backend.config import settings
+from config import settings
 
 class AnalysisError(Exception):
     pass

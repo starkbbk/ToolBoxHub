@@ -1,7 +1,7 @@
 import os
 import fitz  # PyMuPDF
 from typing import List, Tuple
-from backend.shared.file_utils import generate_uuid_filename
+from shared.file_utils import generate_uuid_filename
 
 class PDFService:
     @staticmethod

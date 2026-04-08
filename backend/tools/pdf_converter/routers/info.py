@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.database import get_db
-from backend.tools.pdf_converter.models.pdf_job import PDFJob
-from backend.tools.pdf_converter.schemas.pdf_job import PDFJobResponse
+from database import get_db
+from tools.pdf_converter.models.pdf_job import PDFJob
+from tools.pdf_converter.schemas.pdf_job import PDFJobResponse
 
 router = APIRouter()
 

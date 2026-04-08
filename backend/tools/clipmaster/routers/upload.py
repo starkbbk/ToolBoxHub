@@ -1,18 +1,18 @@
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
-from backend.database import get_db
-from backend.shared.response import success_response, error_response
-from backend.shared.file_utils import generate_uuid, get_extension
-from backend.config import settings
-from backend.tools.clipmaster.models.project import Project
-from backend.tools.clipmaster.services.youtube_downloader import is_valid_youtube_url, download_video
+from database import get_db
+from shared.response import success_response, error_response
+from shared.file_utils import generate_uuid, get_extension
+from config import settings
+from tools.clipmaster.models.project import Project
+from tools.clipmaster.services.youtube_downloader import is_valid_youtube_url, download_video
 from pydantic import BaseModel
 import os
 import aiofiles
 
 router = APIRouter()
 
-ALLOWED_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
+ALLOWED_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".mp3", ".m4a", ".wav", ".aac"}
 
 class ProcessUrlRequest(BaseModel):
     url: str

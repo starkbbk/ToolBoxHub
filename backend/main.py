@@ -3,17 +3,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.config import settings
-from backend.database import engine, Base
-from backend.shared.response import success_response
+from config import settings
+from database import engine, Base
+from shared.response import success_response
 
 # Import tools routers
-from backend.tools.clipmaster.routers import router as clipmaster_router
-from backend.tools.clipmaster.services.progress_manager import progress_manager
-from backend.tools.pdf_converter.routers import router as pdf_converter_router
-from backend.tools.image_compressor.routers.placeholder import router as image_compressor_router
-from backend.tools.audio_transcriber.routers.placeholder import router as audio_transcriber_router
-from backend.tools.text_summarizer.routers.placeholder import router as text_summarizer_router
+from tools.clipmaster.routers import router as clipmaster_router
+from tools.clipmaster.services.progress_manager import progress_manager
+from tools.pdf_converter.routers import router as pdf_converter_router
+from tools.image_compressor.routers.placeholder import router as image_compressor_router
+from tools.audio_transcriber.routers.placeholder import router as audio_transcriber_router
+from tools.text_summarizer.routers.placeholder import router as text_summarizer_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -72,11 +72,28 @@ def get_tools():
 
 @app.websocket("/ws/clipmaster/progress/{project_id}")
 async def websocket_progress(websocket: WebSocket, project_id: int):
+    print(f"DEBUG: WebSocket connection attempt for project {project_id}")
     await progress_manager.connect(project_id, websocket)
+    print(f"DEBUG: WebSocket connected for project {project_id}")
+    
+    # Send current state immediately so frontend isn't stuck waiting for the next update
+    from database import SessionLocal
+    from tools.clipmaster.models.project import Project
+    db = SessionLocal()
+    try:
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if project:
+            await progress_manager.send_update(
+                project_id, 
+                project.status, 
+                0, 
+                f"Project {project.status.replace('_', ' ')}..." if project.status != "uploading" else "Ready to process"
+            )
+    finally:
+        db.close()
+
     try:
         while True:
-            # Maintain connection until client disconnects or pipeline finishes
-            # Pings can be added if needed, right now we just wait for events
             await websocket.receive_text()
     except WebSocketDisconnect:
         progress_manager.disconnect(project_id, websocket)

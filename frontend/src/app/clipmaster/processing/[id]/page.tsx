@@ -23,23 +23,64 @@ export default function ProcessingPage() {
   const { lastMessage, isConnected, error: wsError } = useWebSocket(projectId);
   const currentProject = useProjectStore((state) => state.currentProject);
   const fetchProject = useProjectStore((state) => state.fetchProject);
+  
+  const [displayMessage, setDisplayMessage] = useState<any>(null);
 
   useEffect(() => {
     fetchProject(projectId);
   }, [projectId, fetchProject]);
 
+  // Sync WebSocket messages to display state
   useEffect(() => {
-    if (lastMessage?.step === "completed") {
+    if (lastMessage) {
+      setDisplayMessage(lastMessage);
+    }
+  }, [lastMessage]);
+
+  // Polling Fallback
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    const pollStatus = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/clipmaster/project/${projectId}/status`);
+        const data = await res.json();
+        if (data.status === "success" && data.data) {
+          // Only update if the status is different or we don't have a message yet
+          if (!displayMessage || displayMessage.step !== data.data.status) {
+            console.log("Polling update received:", data.data);
+            setDisplayMessage({
+              step: data.data.status,
+              progress: data.data.status === "completed" ? 100 : (displayMessage?.progress || 0),
+              message: data.data.message || `Project ${data.data.status.replace("_", " ")}...`
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    };
+
+    // Poll if not connected or if we haven't received a message yet
+    if (!isConnected || !displayMessage) {
+      interval = setInterval(pollStatus, 3000);
+    }
+
+    return () => clearInterval(interval);
+  }, [projectId, isConnected, displayMessage]);
+
+  useEffect(() => {
+    if (displayMessage?.step === "completed") {
       setTimeout(() => {
         router.push(`/clipmaster/dashboard/${projectId}`);
       }, 2000);
     }
-  }, [lastMessage, router, projectId]);
+  }, [displayMessage, router, projectId]);
 
   const getCurrentStepIndex = () => {
-    if (lastMessage?.step === "failed") return -1;
-    if (lastMessage?.step === "completed") return STEPS.length - 1;
-    return STEPS.findIndex(s => s.id === lastMessage?.step);
+    if (displayMessage?.step === "failed") return -1;
+    if (displayMessage?.step === "completed") return STEPS.length - 1;
+    return STEPS.findIndex(s => s.id === displayMessage?.step);
   };
 
   const currentStepIndex = getCurrentStepIndex();
@@ -66,13 +107,13 @@ export default function ProcessingPage() {
               <div className="flex flex-col items-center gap-3">
                 <div className={cn(
                   "flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-700 shadow-lg",
-                  idx < currentStepIndex || lastMessage?.step === "completed" 
+                  idx < currentStepIndex || displayMessage?.step === "completed" 
                     ? "border-green-500 bg-green-500 text-white shadow-green-500/20" 
                     : idx === currentStepIndex 
                       ? "border-indigo-500 bg-indigo-500/20 text-indigo-400 shadow-indigo-500/30" 
                       : "border-[#2a2a2a] bg-zinc-900 text-zinc-600"
                 )}>
-                  {idx < currentStepIndex || lastMessage?.step === "completed" ? (
+                  {idx < currentStepIndex || displayMessage?.step === "completed" ? (
                     <Check className="h-6 w-6" />
                   ) : idx === currentStepIndex ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -82,7 +123,7 @@ export default function ProcessingPage() {
                 </div>
                 <span className={cn(
                   "text-[11px] font-bold uppercase tracking-widest transition-colors duration-500",
-                  idx <= currentStepIndex || lastMessage?.step === "completed" ? "text-white" : "text-zinc-600"
+                  idx <= currentStepIndex || displayMessage?.step === "completed" ? "text-white" : "text-zinc-600"
                 )}>
                   {step.label}
                 </span>
@@ -105,12 +146,12 @@ export default function ProcessingPage() {
             <div className="flex flex-col gap-1 overflow-hidden">
               <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Current Phase</p>
               <h3 className="text-lg font-semibold text-white truncate">
-                {lastMessage?.message || "Preparing environment..."}
+                {displayMessage?.message || "Preparing environment..."}
               </h3>
             </div>
             <div className="text-right flex-shrink-0">
               <p className="text-3xl font-black text-indigo-400 tracking-tighter">
-                {Math.round(lastMessage?.progress || 0)}%
+                {Math.round(displayMessage?.progress || 0)}%
               </p>
             </div>
           </div>
@@ -118,23 +159,23 @@ export default function ProcessingPage() {
           <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-900 border border-[#2a2a2a] p-1">
             <div 
               className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(99,102,241,0.4)]"
-              style={{ width: `${Math.max(2, lastMessage?.progress || 0)}%` }}
+              style={{ width: `${Math.max(2, displayMessage?.progress || 0)}%` }}
             />
           </div>
         </div>
 
         {/* Errors / Footer */}
-        {lastMessage?.step === "failed" && (
+        {displayMessage?.step === "failed" && (
           <div className="mt-8 flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-red-500">
             <AlertCircle className="h-6 w-6 flex-shrink-0" />
             <div>
               <p className="font-bold">Processing Failed</p>
-              <p className="text-sm opacity-80">{lastMessage.message}</p>
+              <p className="text-sm opacity-80">{displayMessage.message}</p>
             </div>
           </div>
         )}
 
-        {!isConnected && !lastMessage && (
+        {!isConnected && !displayMessage && (
           <div className="mt-8 flex items-center justify-center gap-2 text-sm text-zinc-500">
             <Loader2 className="h-4 w-4 animate-spin" />
             Connecting to pipeline...

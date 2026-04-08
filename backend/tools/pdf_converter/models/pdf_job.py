@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, JSON, DateTime, Float, Text
 from datetime import datetime
-from backend.models.base import Base
+from models.base import Base
 
 class PDFJob(Base):
     __tablename__ = "pdf_jobs"

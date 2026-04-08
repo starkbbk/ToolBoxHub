@@ -4,9 +4,9 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import aiofiles
 
-from backend.database import get_db
-from backend.shared.response import error_response
-from backend.tools.clipmaster.models.project import Project
+from database import get_db
+from shared.response import error_response
+from tools.clipmaster.models.project import Project
 
 router = APIRouter()
 

@@ -5,19 +5,18 @@ from typing import Optional
 import asyncio
 import os
 
-from backend.database import get_db, SessionLocal
-from backend.shared.response import success_response, error_response
-from backend.config import settings
+from database import get_db, SessionLocal
+from shared.response import success_response, error_response
+from config import settings
 
-from backend.tools.clipmaster.models.project import Project
-from backend.tools.clipmaster.models.clip import Clip
-from backend.tools.clipmaster.models.transcript import Transcript
-from backend.tools.clipmaster.models.rubric import Rubric
+from tools.clipmaster.models.project import Project
+from tools.clipmaster.models.clip import Clip
+from tools.clipmaster.models.transcript import Transcript
+from tools.clipmaster.models.rubric import Rubric
 
-from backend.tools.clipmaster.services.video_processor import extract_audio, get_video_duration
-from backend.tools.clipmaster.services.transcriber import transcribe
-from backend.tools.clipmaster.services.ai_analyzer import analyze_transcript
-from backend.tools.clipmaster.services.progress_manager import progress_manager
+from tools.clipmaster.services.transcriber import transcribe
+from tools.clipmaster.services.ai_analyzer import analyze_transcript
+from tools.clipmaster.services.progress_manager import progress_manager
 
 router = APIRouter()
 
@@ -25,60 +24,40 @@ class ProcessRequest(BaseModel):
     rubric_id: Optional[int] = None
 
 async def run_pipeline(project_id: int, rubric_id: Optional[int] = None):
+    print(f"DEBUG: [PROJECT {project_id}] Starting run_pipeline")
     # Retrieve project using a new session for background task
     db = SessionLocal()
     try:
         project = db.query(Project).filter(Project.id == project_id).first()
         if not project:
+            print(f"DEBUG: [PROJECT {project_id}] Project not found in database")
             return
 
-        # 1. AUDIO EXTRACTION
-        project.status = "extracting_audio"
-        db.commit()
-        await progress_manager.send_update(project_id, "extracting_audio", 0, "Starting audio extraction...")
-
-        project_dir = os.path.dirname(project.file_path)
+        # Skip audio extraction as it's now handled by the downloader/source
+        audio_path = project.file_path
         
-        def audio_progress(pct: float):
-            # non-async callback wrapper hack (since it's not async in extractor currently)
-            # we just do it via asyncio.run_coroutine_threadsafe if we had a loop, but
-            # keeping it simple by not awaiting directly or wrapping sync.
-            try:
-                loop = asyncio.get_event_loop()
-                loop.create_task(progress_manager.send_update(project_id, "extracting_audio", pct, f"Extracting audio ({int(pct)}%)"))
-            except Exception:
-                pass
-                
-        try:
-            # this is synchronous, would ideally run in threadpool
-            audio_path = await asyncio.to_thread(extract_audio, project.file_path, project_dir, audio_progress)
-            project.audio_path = audio_path
-            
-            if not project.duration_seconds:
-                project.duration_seconds = get_video_duration(project.file_path)
-            
-            db.commit()
-        except Exception as e:
-            project.status = "failed"
-            project.error_message = str(e)
-            db.commit()
-            await progress_manager.send_update(project_id, "failed", 0, str(e))
-            return
+        if not project.duration_seconds:
+            # We can still try to get duration if needed, but for simplicity skip for now or use a lightweight tool
+            pass
 
         # 2. TRANSCRIPTION
         project.status = "transcribing"
         db.commit()
-        await progress_manager.send_update(project_id, "transcribing", 0, "Starting transcription...")
+        await progress_manager.send_update(project_id, "transcribing", 0, "Starting cloud transcription...")
 
+        main_loop = asyncio.get_event_loop()
         def trans_progress(pct: float):
             try:
-                loop = asyncio.get_event_loop()
-                loop.create_task(progress_manager.send_update(project_id, "transcribing", pct, f"Transcribing ({int(pct)}%)"))
-            except Exception:
-                pass
+                asyncio.run_coroutine_threadsafe(
+                    progress_manager.send_update(project_id, "transcribing", pct, f"Transcribing ({int(pct)}%)"),
+                    main_loop
+                )
+            except Exception as e:
+                print(f"WS Transcribe Error: {e}")
 
         try:
-            trans_result = await asyncio.to_thread(transcribe, audio_path, None, trans_progress)
+            # transcribe is now async
+            trans_result = await transcribe(audio_path, None, trans_progress)
             
             transcript_entry = Transcript(
                 project_id=project.id,
@@ -90,10 +69,11 @@ async def run_pipeline(project_id: int, rubric_id: Optional[int] = None):
             db.add(transcript_entry)
             db.commit()
         except Exception as e:
+            print(f"ERROR: [PROJECT {project_id}] Transcription Failed: {str(e)}")
             project.status = "failed"
             project.error_message = str(e)
             db.commit()
-            await progress_manager.send_update(project_id, "failed", 0, "Transcription failed")
+            await progress_manager.send_update(project_id, "failed", 0, f"Transcription failed: {str(e)}")
             return
 
         # 3. AI ANALYSIS
