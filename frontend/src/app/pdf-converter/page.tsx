@@ -48,8 +48,10 @@ export default function PDFConverterPage() {
     PDF_TOOLS.find(t => t.id === activeToolId) || null
   , [activeToolId]);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const renderTool = () => {
-    if (!activeToolId) return <ToolDashboard onSelectTool={setActiveToolId} />;
+    if (!activeToolId) return <ToolDashboard onSelectTool={(id) => { setActiveToolId(id); setIsSidebarOpen(false); }} />;
 
     switch (activeToolId) {
       case "merge": return <PDFMerge />;
@@ -86,20 +88,20 @@ export default function PDFConverterPage() {
       case "scan": return <PDFScan />;
       default:
         return activeTool ? (
-          <div className="flex flex-col items-center justify-center p-20 text-center space-y-6 animate-in fade-in zoom-in duration-500">
+          <div className="flex flex-col items-center justify-center p-10 md:p-20 text-center space-y-6 animate-in fade-in zoom-in duration-500">
             <div className="p-8 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <activeTool.icon className="h-16 w-16" />
+              <activeTool.icon className="h-12 w-12 md:h-16 md:w-16" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-3xl font-bold text-white">{activeTool.label}</h2>
-              <p className="text-zinc-500 max-w-md mx-auto">
+              <h2 className="text-2xl md:text-3xl font-bold text-white">{activeTool.label}</h2>
+              <p className="text-zinc-500 max-w-md mx-auto text-sm">
                 This tool is currently being optimized for high-performance browser execution. 
                 Full activation coming soon!
               </p>
             </div>
             <button 
               onClick={() => setActiveToolId(null)}
-              className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-bold transition-all"
+              className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-bold transition-all text-sm"
             >
               Back to Dashboard
             </button>
@@ -109,38 +111,63 @@ export default function PDFConverterPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-zinc-950 overflow-hidden">
-      {/* Dynamic Sidebar */}
-      <ToolSidebar 
-        activeToolId={activeToolId} 
-        onSelectTool={setActiveToolId} 
-      />
+    <div className="flex h-[calc(100vh-64px)] bg-zinc-950 overflow-hidden relative">
+      {/* Dynamic Sidebar - Responsive */}
+      <div className={cn(
+        "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity duration-300",
+        isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+      )} onClick={() => setIsSidebarOpen(false)} />
+      
+      <div className={cn(
+        "absolute lg:relative z-50 h-full transition-transform duration-300 transform lg:translate-x-0 w-72 shrink-0",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <ToolSidebar 
+          activeToolId={activeToolId} 
+          onSelectTool={(id) => { setActiveToolId(id); setIsSidebarOpen(false); }} 
+        />
+      </div>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#09090b]">
-        {/* Context Header (only when tool is selected) */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative">
+        {/* Context Header */}
         {activeTool && (
-          <div className="h-16 px-8 flex items-center justify-between border-b border-white/5 bg-zinc-950/50 backdrop-blur-md sticky top-0 z-20">
-            <div className="flex items-center gap-4">
+          <div className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-white/5 bg-zinc-950/50 backdrop-blur-md sticky top-0 z-20">
+            <div className="flex items-center gap-2 md:gap-4">
+              <button 
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden p-2 -ml-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+              >
+                <ChevronLeft className={cn("h-5 w-5 transition-transform", isSidebarOpen ? "rotate-180" : "")} />
+              </button>
               <button 
                 onClick={() => setActiveToolId(null)}
-                className="p-2 -ml-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                className="p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                 title="Back to Dashboard"
               >
                 <Home className="h-5 w-5" />
               </button>
-              <div className="h-4 w-px bg-white/10" />
-              <div className="flex items-center gap-3">
-                {activeTool.icon && <activeTool.icon className="h-5 w-5 text-indigo-400" />}
-                <h2 className="font-bold text-white">{activeTool.label}</h2>
+              <div className="h-4 w-px bg-white/10 hidden md:block" />
+              <div className="flex items-center gap-3 overflow-hidden">
+                {activeTool.icon && <activeTool.icon className="h-5 w-5 text-indigo-400 shrink-0" />}
+                <h2 className="font-bold text-white truncate text-sm md:text-base">{activeTool.label}</h2>
               </div>
             </div>
-            {activeTool.isBackend && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-                <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">AI Enhanced</span>
-              </div>
-            )}
+            
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden px-3 py-1.5 bg-indigo-600/10 border border-indigo-500/20 rounded-lg text-indigo-400 text-[10px] font-black uppercase tracking-widest"
+              >
+                Tools
+              </button>
+              {activeTool.isBackend && (
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                  <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">AI Enhanced</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

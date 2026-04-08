@@ -41,6 +41,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static Files for Production
+from fastapi.staticfiles import StaticFiles
+
+# Ensure upload directories exist
+os.makedirs(settings.upload_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
+
 # API Routes
 app.include_router(clipmaster_router, prefix="/api/clipmaster")
 app.include_router(pdf_converter_router, prefix="/api/pdf-converter")

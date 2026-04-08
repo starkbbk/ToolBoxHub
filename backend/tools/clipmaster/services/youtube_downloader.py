@@ -46,16 +46,8 @@ def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
         }
     }
 
-    # Primary attempt: High-quality video + audio
-    ydl_opts_video = {
-        **common_opts,
-        'format': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best',
-        'merge_output_format': 'mp4',
-        'progress_hooks': [hook] if progress_callback else [],
-    }
-
-    # Fallback attempt: Audio only (much harder to block)
-    ydl_opts_audio = {
+    # Optimized for Cloud: Prioritize audio extraction for super-fast transcription
+    ydl_opts_efficient = {
         **common_opts,
         'format': 'bestaudio/best',
         'postprocessors': [{
@@ -63,55 +55,30 @@ def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
-        'outtmpl': os.path.join(output_dir, 'audio_source.%(ext)s'),
+        'progress_hooks': [hook] if progress_callback else [],
     }
 
     try:
-        try:
-            print("DEBUG: Attempting full video download...")
-            with yt_dlp.YoutubeDL(ydl_opts_video) as ydl:
-                info_dict = ydl.extract_info(url, download=True)
-                video_file = ydl.prepare_filename(info_dict)
-                
-                # Check for merged file
-                if not os.path.exists(video_file):
-                    for f in os.listdir(output_dir):
-                        if f.startswith('video_source.'):
-                            video_file = os.path.join(output_dir, f)
-                            break
-                
-                # Extract audio from the video file
-                audio_file = os.path.join(output_dir, "audio_source.mp3")
-                os.system(f"ffmpeg -i \"{video_file}\" -vn -acodec libmp3lame -y \"{audio_file}\" > /dev/null 2>&1")
-                
-                return {
-                    "video_path": video_file,
-                    "audio_path": audio_file if os.path.exists(audio_file) else video_file,
-                    "title": info_dict.get('title', 'Unknown Title'),
-                    "duration": info_dict.get('duration', 0),
-                    "thumbnail_url": info_dict.get('thumbnail', '')
-                }
-        except Exception as e:
-            if "403" in str(e) or "Forbidden" in str(e):
-                print(f"DEBUG: Video block detected (403). Falling back to audio-only download...")
-                with yt_dlp.YoutubeDL(ydl_opts_audio) as ydl:
-                    info_dict = ydl.extract_info(url, download=True)
-                    audio_file = os.path.join(output_dir, "audio_source.mp3")
-                    
-                    # yt-dlp might have named it something else with post-processing
-                    if not os.path.exists(audio_file):
-                        for f in os.listdir(output_dir):
-                            if f.endswith('.mp3'):
-                                audio_file = os.path.join(output_dir, f)
-                                break
+        print("DEBUG: Downloading audio-only for cloud transcription...")
+        with yt_dlp.YoutubeDL(ydl_opts_efficient) as ydl:
+            info_dict = ydl.extract_info(url, download=True)
+            audio_file = os.path.join(output_dir, 'audio_source.mp3')
+            
+            # Post-processor sometimes names it differently
+            if not os.path.exists(audio_file):
+                for f in os.listdir(output_dir):
+                    if f.endswith('.mp3'):
+                        audio_file = os.path.join(output_dir, f)
+                        break
 
-                    return {
-                        "video_path": None, # Signal to UI that we are using audio-only
-                        "audio_path": audio_file,
-                        "title": info_dict.get('title', 'Unknown Title (Audio Only)'),
-                        "duration": info_dict.get('duration', 0),
-                        "thumbnail_url": info_dict.get('thumbnail', '')
-                    }
-            raise e
+            # Metadata only, video path is None for now to save bandwidth
+            return {
+                "video_path": None, 
+                "audio_path": audio_file,
+                "title": info_dict.get('title', 'Unknown Title'),
+                "duration": info_dict.get('duration', 0),
+                "thumbnail_url": info_dict.get('thumbnail', '')
+            }
     except Exception as e:
+        print(f"ERROR: Downloader failed: {str(e)}")
         raise YouTubeDownloaderError(str(e))
