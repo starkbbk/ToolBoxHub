@@ -1,16 +1,19 @@
 {
   "version": 2,
-  "framework": "nextjs",
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/.next",
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
+    }
+  ],
   "rewrites": [
     {
-      "source": "/api/:match*",
-      "destination": "https://toolbox-hub-backend.onrender.com/api/:match*"
+      "source": "/api/(.*)",
+      "destination": "https://toolbox-hub-backend.onrender.com/api/$1"
     },
     {
-      "source": "/uploads/:match*",
-      "destination": "https://toolbox-hub-backend.onrender.com/uploads/:match*"
+      "source": "/uploads/(.*)",
+      "destination": "https://toolbox-hub-backend.onrender.com/uploads/$1"
     }
   ]
 }
