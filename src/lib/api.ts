@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
 import { API_URL } from '@/constants';
 
 const api = axios.create({
@@ -10,7 +10,7 @@ const api = axios.create({
 
 // Request interceptor for auth token
 api.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
