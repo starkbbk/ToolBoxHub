@@ -14,6 +14,7 @@ from tools.pdf_converter.routers import router as pdf_converter_router
 from tools.image_compressor.routers.placeholder import router as image_compressor_router
 from tools.audio_transcriber.routers import router as audio_transcriber_router
 from tools.text_summarizer.routers import router as text_summarizer_router
+from tools.text_remover.routers import router as text_remover_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.join(settings.upload_dir, "clipmaster"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "pdf_converter"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "image_compressor"), exist_ok=True)
+    os.makedirs(os.path.join(settings.upload_dir, "text_remover"), exist_ok=True)
     yield
     # Shutdown
 
@@ -45,6 +47,7 @@ app.include_router(pdf_converter_router, prefix="/api/pdf-converter")
 app.include_router(image_compressor_router, prefix="/api/image-compressor")
 app.include_router(audio_transcriber_router, prefix="/api/audio-transcriber")
 app.include_router(text_summarizer_router, prefix="/api/text-summarizer")
+app.include_router(text_remover_router, prefix="/api/text-remover")
 
 @app.get("/api/health")
 def health_check():
@@ -56,7 +59,8 @@ def health_check():
             {"id": "pdf-converter", "status": "active"},
             {"id": "image-compressor", "status": "coming_soon"},
             {"id": "audio-transcriber", "status": "coming_soon"},
-            {"id": "text-summarizer", "status": "coming_soon"}
+            {"id": "text-summarizer", "status": "coming_soon"},
+            {"id": "text-remover", "status": "active"}
         ]
     })
 
@@ -67,7 +71,8 @@ def get_tools():
         {"id": "pdf-converter", "name": "PDF Converter", "status": "active"},
         {"id": "image-compressor", "name": "Image Compressor", "status": "coming_soon"},
         {"id": "audio-transcriber", "name": "Audio Transcriber", "status": "coming_soon"},
-        {"id": "text-summarizer", "name": "Text Summarizer", "status": "coming_soon"}
+        {"id": "text-summarizer", "name": "Text Summarizer", "status": "coming_soon"},
+        {"id": "text-remover", "name": "Text Remover", "status": "active"}
     ])
 
 @app.websocket("/ws/clipmaster/progress/{project_id}")

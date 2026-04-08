@@ -3,13 +3,12 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useRef, useState, ComponentType, useCallback } from "react";
-import { LucideProps } from "lucide-react";
 
 interface ToolCardProps {
   id: string;
   name: string;
   description: string;
-  icon: ComponentType<LucideProps>;
+  icon: ComponentType<any>;
   route: string;
   status: string;
   index: number;

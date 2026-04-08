@@ -21,7 +21,7 @@ import {
 import PDFDropzone from "../pdf-converter/PDFDropzone";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import axios from "axios";
+import api from "@/lib/api";
 
 interface MaskRegion {
   id: string;
@@ -161,15 +161,14 @@ export default function VideoProcessor() {
       const formData = new FormData();
       formData.append("image", blob, "frame.jpg");
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const res = await fetch(`${apiUrl}/api/text-remover/detect`, {
-        method: "POST",
-        body: formData,
+      // Use shared api instance instead of fetch
+      const res = await api.post("/api/text-remover/detect", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
       });
 
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
-      const json = await res.json();
-      if (json.status !== "success") throw new Error(json.message || "Detection failed");
+      // api instance already returns json.data due to interceptor
+      const json = res as any;
+      if (!json.success) throw new Error(json.message || "Detection failed");
 
       const rect = canvasRef.current.getBoundingClientRect();
       const scaleX = rect.width / videoRef.current.videoWidth;
@@ -217,12 +216,15 @@ export default function VideoProcessor() {
     }))));
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await axios.post(`${apiUrl}/api/text-remover/video`, formData);
-      if (response.data.status === "success") {
-        setOutputVideo(`${apiUrl}${response.data.data.output_path}`);
+      const response = await api.post('/api/text-remover/video', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }) as any;
+      
+      if (response.success) {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        setOutputVideo(`${apiUrl}${response.data.output_path}`);
         toast.success("Video cleaned successfully!");
-      } else throw new Error(response.data.message);
+      } else throw new Error(response.message);
     } catch (err) {
       toast.error("Processing failed.");
     } finally {

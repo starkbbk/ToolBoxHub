@@ -10,13 +10,14 @@ const api = axios.create({
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
-    const message = error.response?.data?.detail || error.response?.data?.message || error.message || 'An error occurred';
+  (response: any) => response.data,
+  (error: any) => {
+    const errorData = error.response?.data;
+    const message = errorData?.detail || errorData?.message || (error as Error).message || 'An error occurred';
     console.error('API Error:', message);
     
     // Attach the cleaned up message to the error object so catch blocks can use it
-    error.message = message;
+    (error as Error).message = message;
     return Promise.reject(error);
   }
 );

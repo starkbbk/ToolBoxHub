@@ -15,6 +15,7 @@ import {
 import PDFDropzone from "../pdf-converter/PDFDropzone";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import api from "@/lib/api";
 
 interface TextRegion {
   id: string;
@@ -60,17 +61,14 @@ export default function ImageProcessor() {
       const formData = new FormData();
       formData.append("image", imgFile);
 
-      const res = await fetch(`${apiUrl}/api/text-remover/detect`, {
-        method: "POST",
-        body: formData,
-      });
+      // Use shared api instance instead of fetch
+      const res = (await api.post("/api/text-remover/detect", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })) as any;
 
-      if (!res.ok) throw new Error(`Server responded ${res.status}`);
-      const json = await res.json();
+      if (!res.success) throw new Error(res.message || "Detection failed");
 
-      if (json.status !== "success") throw new Error(json.message || "Detection failed");
-
-      const detected: TextRegion[] = json.data.regions.map((r: any, i: number) => ({
+      const detected: TextRegion[] = res.data.regions.map((r: any, i: number) => ({
         id: `region-${i}`,
         x: r.x, y: r.y, w: r.w, h: r.h,
         text: r.text,

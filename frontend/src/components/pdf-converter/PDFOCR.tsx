@@ -50,7 +50,7 @@ export default function PDFOCR() {
       let fullText = "";
 
       const worker = await createWorker('eng', 1, {
-        logger: m => {
+        logger: (m: any) => {
           if (m.status === 'recognizing text') {
              // Progress within a page
           }
