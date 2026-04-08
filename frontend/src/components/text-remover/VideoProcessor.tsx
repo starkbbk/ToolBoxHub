@@ -67,7 +67,7 @@ export default function VideoProcessor() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const response = await axios.post(`${apiUrl}/api/text-remover/video`, formData, {
-        onUploadProgress: (progressEvent) => {
+        onUploadProgress: (progressEvent: any) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
           setProgress(Math.min(percentCompleted, 20));
         }
