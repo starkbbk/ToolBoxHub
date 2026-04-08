@@ -165,7 +165,7 @@ export default function SignupPage() {
             onError={() => {
               console.log('Login Failed');
             }}
-            theme="dark"
+            theme="filled_black"
             shape="circle"
           />
         </div>
