@@ -1,100 +1,36 @@
-# 🛠️ ToolboxHub — Your Essential Digital Toolkit
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-![ToolboxHub Banner](banner.png)
+## Getting Started
 
-**ToolboxHub** is a high-performance, modular web application designed to consolidate essential digital tools into a single, sleek "Liquid Glass" interface. From AI-powered video clipping to advanced PDF manipulation, ToolboxHub is built for speed, privacy, and aesthetic excellence.
+First, run the development server:
 
----
-
-## 🚀 Core Features
-
-### 🪄 Text Remover (AI Inpainting)
-Restore your media by surgically removing unwanted text, watermarks, or overlays.
-- **AI Inpainting**: Reconstructs background textures using OpenCV's Deep Telea algorithm.
-- **Smart Banner Detection**: Automatically detects and encompasses text background bars, icons, and containers.
-- **Manual Mask Tool**: Pixel-perfect manual drawing tool for custom removal regions.
-- **Video & Thumbnail Support**: Professional-grade cleanup for video frames and social media thumbnails.
-
-### 🕒 Coming Soon
-- **🖼️ Image Compressor**: Lossless and lossy batch compression.
-- **🔍 SEO Analyzer**: Instant meta-data and performance auditing.
-
----
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **Framework**: Next.js 14 (App Router)
-- **Styling**: Tailwind CSS & Vanilla CSS (Liquid Glass Ecosystem)
-- **Icons**: Lucide React
-- **State**: Zustand
-- **API**: Axios with modular services
-
-### Backend
-- **Engine**: FastAPI (Python 3.10+)
-- **Database**: SQLite with SQLAlchemy ORM
-- **Media Processing**: PyMuPDF, pypdf, faster-whisper, yt-dlp
-- **AI Integration**: OpenRouter (Qwen-2.5 Model)
-
----
-
-## ⚙️ Installation
-
-### 1. Clone the Repository
 ```bash
-git clone https://github.com/starkbbk/ToolBoxHub.git
-cd ToolBoxHub
-```
-
-### 2. Backend Setup
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Mac/Linux
-pip install -r requirements.txt
-cp .env.example .env     # Add your OPENROUTER_API_KEY
-python main.py
-```
-
-### 3. Frontend Setup
-```bash
-cd frontend
-npm install
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
----
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 🧬 Project Structure
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-```text
-ToolboxHub/
-├── backend/
-│   ├── tools/
-│   │   ├── clipmaster/      # Video processing module
-│   │   ├── pdf_converter/   # PDF manipulation module
-│   │   └── compressor/      # (Coming Soon)
-│   ├── main.py              # Single-entry router
-│   └── database.py          # Shared state & persistence
-└── frontend/
-    ├── src/
-    │   ├── app/             # Responsive pages
-    │   ├── components/      # Glassmorphism UI components
-    │   └── lib/             # Typed API & store
-    └── tailwind.config.ts   # Design system tokens
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
----
+## Learn More
 
-## 🛡️ Privacy & Performance
-- **Local First**: Files are processed in secure temporary directories.
-- **Async Execution**: Heavy tasks (Video/PDF) run in the background with live UI updates.
-- **Modular Code**: Every tool is isolated, allowing for infinite scalability.
+To learn more about Next.js, take a look at the following resources:
 
----
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## 📜 License
-Internal Project - All Rights Reserved.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
----
-*Built with ❤️ for the modern digital workspace.*
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
