@@ -1,6 +1,6 @@
 import os
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, field_validator
 
 class Settings(BaseSettings):
     app_name: str = Field("ToolboxHub", env="APP_NAME")
@@ -14,9 +14,16 @@ class Settings(BaseSettings):
     
     openrouter_api_key: str = Field("", env="OPENROUTER_API_KEY")
     openrouter_base_url: str = Field("https://openrouter.ai/api/v1", env="OPENROUTER_BASE_URL")
-    ai_model: str = Field("qwen/qwen3.6-plus:free", env="AI_MODEL")
+    ai_model: str = Field("qwen/qwen-2.5-72b-instruct:free", env="AI_MODEL")
     groq_api_key: str = Field("", env="GROQ_API_KEY")
     groq_base_url: str = Field("https://api.groq.com/openai/v1", env="GROQ_BASE_URL")
+
+    @field_validator("openrouter_api_key", "groq_api_key", "ai_model", mode="before")
+    @classmethod
+    def strip_whitespace(cls, v):
+        if isinstance(v, str):
+            return v.strip()
+        return v
     
     class Config:
         env_file = ".env"

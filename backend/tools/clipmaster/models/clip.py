@@ -17,6 +17,7 @@ class Clip(Base):
     confidence = Column(Integer) # 0 to 100
     reason = Column(Text)
     is_approved = Column(Boolean, default=False)
+    file_path = Column(String(500), nullable=True)
     user_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
 

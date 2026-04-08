@@ -10,12 +10,12 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "ClipMaster", href: "/clipmaster" },
+    { name: "YTClipMaster", href: "/clipmaster" },
     { name: "History", href: "/clipmaster/history" },
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-[#2a2a2a] bg-[#0a0a0a]/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 w-full glass-navbar">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">

@@ -1,24 +1,25 @@
-import math
 import httpx
 import os
-from typing import Callable, Optional
+from typing import Callable, Optional, Awaitable
 from config import settings
 from tools.clipmaster.utils.time_formatter import seconds_to_timestamp
-from pydub import AudioSegment
 
 async def _send_to_groq(client, file_path, start_offset=0.0):
     with open(file_path, "rb") as audio_file:
         response = await client.post(
-            "https://api.groq.com/openai/v1/audio/transcriptions",
+            f"{settings.groq_base_url}/audio/transcriptions",
             headers={"Authorization": f"Bearer {settings.groq_api_key}"},
-            files={"file": (os.path.basename(file_path), audio_file, "audio/mpeg")},
+            files={"file": (os.path.basename(file_path), audio_file)},
             data={
                 "model": "whisper-large-v3",
                 "response_format": "verbose_json",
                 "timestamp_granularities[]": "segment"
             }
         )
-        response.raise_for_status()
+        if response.status_code != 200:
+            error_data = response.json()
+            raise ValueError(f"Groq API Error: {error_data.get('error', {}).get('message', 'Unknown error')}")
+            
         res = response.json()
         
         for seg in res.get("segments", []):
@@ -27,13 +28,31 @@ async def _send_to_groq(client, file_path, start_offset=0.0):
             
         return res
 
-async def transcribe(audio_path: str, language: Optional[str] = None, progress_callback: Optional[Callable[[float], None]] = None) -> dict:
+async def transcribe(audio_path: str, language: Optional[str] = None, progress_callback: Optional[Callable[[float], Awaitable[None]]] = None) -> dict:
     if not settings.groq_api_key:
         raise ValueError("GROQ_API_KEY is not set.")
+
+    # Robust path resolution: check if file exists, if not, look for common audio extensions
+    if not os.path.exists(audio_path):
+        project_dir = os.path.dirname(audio_path)
+        if os.path.exists(project_dir):
+            files = os.listdir(project_dir)
+            # Prioritize files starting with 'audio.'
+            audio_files = [f for f in files if f.startswith('audio.')]
+            if audio_files:
+                audio_path = os.path.join(project_dir, audio_files[0])
+                print(f"DEBUG: Found alternative audio path: {audio_path}")
+            else:
+                raise FileNotFoundError(f"Could not find audio file at {audio_path} or any 'audio.*' fallback.")
+        else:
+            raise FileNotFoundError(f"Project directory not found: {project_dir}")
 
     file_size_mb = os.path.getsize(audio_path) / (1024 * 1024)
     MAX_SIZE_MB = 25
     
+    if file_size_mb > MAX_SIZE_MB:
+        raise ValueError(f"File size ({file_size_mb:.2f}MB) exceeds the 25MB limit for cloud transcription even after compression attempts. Please use a shorter video (e.g. under 45 mins).")
+
     segments_list = []
     full_text_parts = []
     word_count = 0
@@ -41,48 +60,20 @@ async def transcribe(audio_path: str, language: Optional[str] = None, progress_c
     lang = "en"
     
     if progress_callback:
-        progress_callback(5.0)
+        await progress_callback(10.0)
 
     async with httpx.AsyncClient(timeout=600) as client:
-        if file_size_mb <= MAX_SIZE_MB:
-            try:
-                res = await _send_to_groq(client, audio_path)
-                total_duration = res.get("duration", 0)
-                lang = res.get("language", "en")
-                for seg in res.get("segments", []):
-                    segments_list.append(seg)
-            except Exception as e:
-                print(f"ERROR: Groq Transcription failed: {str(e)}")
-                raise e
-            if progress_callback: progress_callback(90.0)
-        else:
-            print(f"DEBUG: File size {file_size_mb:.2f}MB > 25MB. Chunking with pydub...")
-            audio = AudioSegment.from_file(audio_path)
-            total_duration = len(audio) / 1000.0
-            
-            CHUNK_LENGTH_MS = 15 * 60 * 1000 
-            chunks = [audio[i:i + CHUNK_LENGTH_MS] for i in range(0, len(audio), CHUNK_LENGTH_MS)]
-            
-            for i, chunk in enumerate(chunks):
-                chunk_path = f"{audio_path}_chunk{i}.mp3"
-                chunk.export(chunk_path, format="mp3", bitrate="64k") 
-                
-                offset_sec = (i * CHUNK_LENGTH_MS) / 1000.0
-                try:
-                    res = await _send_to_groq(client, chunk_path, offset_sec)
-                    for seg in res.get("segments", []):
-                        segments_list.append(seg)
-                    if i == 0: lang = res.get("language", "en")
-                except Exception as e:
-                    print(f"ERROR: Groq Transcription chunk {i} failed: {str(e)}")
-                    raise e
-                finally:
-                    if os.path.exists(chunk_path):
-                        os.remove(chunk_path)
-                        
-                if progress_callback:
-                    pct = 5.0 + 85.0 * ((i + 1) / len(chunks))
-                    progress_callback(pct)
+        try:
+            res = await _send_to_groq(client, audio_path)
+            total_duration = res.get("duration", 0)
+            lang = res.get("language", "en")
+            for seg in res.get("segments", []):
+                segments_list.append(seg)
+        except Exception as e:
+            print(f"ERROR: Groq Transcription failed: {str(e)}")
+            raise e
+        
+        if progress_callback: await progress_callback(90.0)
 
     for seg in segments_list:
         start_str = seconds_to_timestamp(seg["start"])
@@ -95,7 +86,7 @@ async def transcribe(audio_path: str, language: Optional[str] = None, progress_c
         word_count += len(text.split())
 
     if progress_callback:
-        progress_callback(100.0)
+        await progress_callback(100.0)
 
     formatted_segments_list = []
     for seg in segments_list:

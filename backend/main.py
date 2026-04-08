@@ -12,8 +12,8 @@ from tools.clipmaster.routers import router as clipmaster_router
 from tools.clipmaster.services.progress_manager import progress_manager
 from tools.pdf_converter.routers import router as pdf_converter_router
 from tools.image_compressor.routers.placeholder import router as image_compressor_router
-from tools.audio_transcriber.routers.placeholder import router as audio_transcriber_router
-from tools.text_summarizer.routers.placeholder import router as text_summarizer_router
+from tools.audio_transcriber.routers import router as audio_transcriber_router
+from tools.text_summarizer.routers import router as text_summarizer_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -97,3 +97,7 @@ async def websocket_progress(websocket: WebSocket, project_id: int):
             await websocket.receive_text()
     except WebSocketDisconnect:
         progress_manager.disconnect(project_id, websocket)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

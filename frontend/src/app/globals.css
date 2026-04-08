@@ -32,6 +32,169 @@
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
+  @keyframes moveVertical {
+    0% { transform: translateY(-50%); }
+    50% { transform: translateY(50%); }
+    100% { transform: translateY(-50%); }
+  }
+  @keyframes moveHorizontal {
+    0% { transform: translateX(-50%) translateY(-10%); }
+    50% { transform: translateX(50%) translateY(10%); }
+    100% { transform: translateX(-50%) translateY(-10%); }
+  }
+  @keyframes moveInCircle {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(180deg); }
+    100% { transform: rotate(360deg); }
+  }
+}
+
+@layer components {
+  /* Premium Glass Cards */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                background 0.3s ease, 
+                border-color 0.3s ease, 
+                box-shadow 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    will-change: transform, opacity;
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4), 
+                0 0 20px rgba(99, 102, 241, 0.1);
+    transform: translateY(-8px);
+  }
+
+  /* Reveal Animation Utility */
+  .reveal-hidden {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .reveal-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Perimeter Glow Beam */
+  .border-beam::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--beam-angle),
+      transparent 80%,
+      rgba(99, 102, 241, 0.5),
+      rgba(168, 85, 247, 0.5),
+      transparent 100%
+    );
+    -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .glass-card:hover.border-beam::before {
+    opacity: 1;
+    animation: beam-spin 3s linear infinite;
+  }
+
+  @property --beam-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  @keyframes beam-spin {
+    from { --beam-angle: 0deg; }
+    to { --beam-angle: 360deg; }
+  }
+
+  /* Reflection Shine Sweep */
+  .shine-sweep::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transform: skewX(-30deg);
+    pointer-events: none;
+  }
+
+  .glass-card:hover .shine-sweep::after {
+    animation: shine-glide 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes shine-glide {
+    from { left: -150%; }
+    to { left: 150%; }
+  }
+
+  .glass-navbar {
+    background: rgba(5, 5, 5, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+@layer utilities {
+  /* Animated Gradient Mesh */
+  @keyframes blob-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(15%, -10%) scale(1.1); }
+    66% { transform: translate(-10%, 15%) scale(0.95); }
+  }
+  .animate-blob {
+    animation: blob-float 20s ease-in-out infinite;
+  }
+
+  /* Sparkling Starfield */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  .animate-twinkle {
+    animation: twinkle var(--twinkle-duration, 3s) ease-in-out infinite;
+  }
+
+  /* Gradient Text Animation */
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .animate-gradient-text {
+    background-size: 200% auto;
+    animation: gradient-shift 6s ease-in-out infinite;
+  }
 }
 
 @layer base {
@@ -110,7 +273,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground select-none;
   }
   html {
     @apply font-sans;

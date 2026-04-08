@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { Clip } from "@/lib/types";
 import { cn, formatTimestamp } from "@/lib/utils";
-import { Play, Edit2, Check, Trash2, Clock, Info } from "lucide-react";
+import { Play, Edit2, Check, Trash2, Clock, Info, Download } from "lucide-react";
+import { API_URL } from "@/constants";
 
 interface ClipCardProps {
-  clip: Clip;
+  clip: Clip & { file_path?: string };
   isActive: boolean;
   onPlay: (seconds: number) => void;
   onEdit: (clip: Clip) => void;
@@ -102,6 +103,18 @@ export default function ClipCard({ clip, isActive, onPlay, onEdit, onApprove, on
           >
             <Edit2 className="h-4 w-4" />
           </button>
+          
+          {clip.file_path && (
+            <a 
+              href={`${API_URL}/api/clipmaster/video-file?path=${encodeURIComponent(clip.file_path)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg text-green-400 hover:bg-green-500/10 transition-colors"
+              title="Download Rendered Clip"
+            >
+              <Download className="h-4 w-4" />
+            </a>
+          )}
         </div>
 
         <div className="flex items-center gap-1">

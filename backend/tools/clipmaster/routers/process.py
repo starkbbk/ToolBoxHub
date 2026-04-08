@@ -17,6 +17,7 @@ from tools.clipmaster.models.rubric import Rubric
 from tools.clipmaster.services.transcriber import transcribe
 from tools.clipmaster.services.ai_analyzer import analyze_transcript
 from tools.clipmaster.services.progress_manager import progress_manager
+from tools.clipmaster.services.audio_extractor import extract_compressed_audio, get_file_size_mb
 
 router = APIRouter()
 
@@ -33,25 +34,45 @@ async def run_pipeline(project_id: int, rubric_id: Optional[int] = None):
             print(f"DEBUG: [PROJECT {project_id}] Project not found in database")
             return
 
-        # Skip audio extraction as it's now handled by the downloader/source
-        audio_path = project.file_path
-        
-        if not project.duration_seconds:
-            # We can still try to get duration if needed, but for simplicity skip for now or use a lightweight tool
-            pass
+        # 1. AUDIO EXTRACTION & COMPRESSION
+        project.status = "audio"
+        db.commit()
+        await progress_manager.send_update(project_id, "audio", 0, "Extracting audio...")
+
+        source_path = project.file_path
+        project_dir = os.path.dirname(source_path)
+        compressed_audio_path = os.path.join(project_dir, "compressed_transcript_audio.mp3")
+
+        # Reuse existing audio_path if it looks like we already extracted it (e.g. from YouTube downloader)
+        # But if it's over 25MB, we MUST re-compress
+        if project.audio_path and os.path.exists(project.audio_path):
+            if get_file_size_mb(project.audio_path) < 25:
+                audio_path = project.audio_path
+            else:
+                await progress_manager.send_update(project_id, "audio", 50, "Compressing audio for cloud upload...")
+                success = extract_compressed_audio(project.audio_path, compressed_audio_path)
+                audio_path = compressed_audio_path if success else project.audio_path
+        else:
+            # Local upload or missing audio_path: Always extract
+            success = extract_compressed_audio(source_path, compressed_audio_path)
+            if success:
+                audio_path = compressed_audio_path
+                project.audio_path = audio_path
+                db.commit()
+            else:
+                # Fallback to original if extraction failed (though transcribe will likely fail too if > 25MB)
+                audio_path = source_path
+
+        await progress_manager.send_update(project_id, "audio", 100, "Audio ready.")
 
         # 2. TRANSCRIPTION
         project.status = "transcribing"
         db.commit()
         await progress_manager.send_update(project_id, "transcribing", 0, "Starting cloud transcription...")
 
-        main_loop = asyncio.get_event_loop()
-        def trans_progress(pct: float):
+        async def trans_progress(pct: float):
             try:
-                asyncio.run_coroutine_threadsafe(
-                    progress_manager.send_update(project_id, "transcribing", pct, f"Transcribing ({int(pct)}%)"),
-                    main_loop
-                )
+                await progress_manager.send_update(project_id, "transcribing", pct, f"Transcribing ({int(pct)}%)")
             except Exception as e:
                 print(f"WS Transcribe Error: {e}")
 
@@ -59,6 +80,9 @@ async def run_pipeline(project_id: int, rubric_id: Optional[int] = None):
             # transcribe is now async
             trans_result = await transcribe(audio_path, None, trans_progress)
             
+            # Clear previous transcript if re-transcribing
+            db.query(Transcript).filter(Transcript.project_id == project.id).delete()
+
             transcript_entry = Transcript(
                 project_id=project.id,
                 full_text=trans_result["full_text"],
@@ -114,6 +138,9 @@ async def run_pipeline(project_id: int, rubric_id: Optional[int] = None):
             await progress_manager.send_update(project_id, "completed", 100, f"Done! Found {len(analysis_result['clips'])} clips.")
             
         except Exception as e:
+            print(f"CRITICAL ERROR: [PROJECT {project_id}] AI Analysis Failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
             project.status = "failed"
             project.error_message = str(e)
             db.commit()

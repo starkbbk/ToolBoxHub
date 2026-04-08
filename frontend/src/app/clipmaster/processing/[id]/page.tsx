@@ -6,6 +6,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, AlertCircle, ChevronRight } from "lucide-react";
 import { useProjectStore } from "@/stores/useProjectStore";
+import { API_URL } from "@/constants";
 
 const STEPS = [
   { id: "uploading", label: "Upload", key: "upload" },
@@ -43,7 +44,7 @@ export default function ProcessingPage() {
 
     const pollStatus = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/clipmaster/project/${projectId}/status`);
+        const res = await fetch(`${API_URL}/api/clipmaster/project/${projectId}/status`);
         const data = await res.json();
         if (data.status === "success" && data.data) {
           // Only update if the status is different or we don't have a message yet

@@ -33,8 +33,51 @@ export default function VideoPlayer({ url, onProgress, onDuration, seekTo, isPla
     }
   }, [seekTo]);
 
+  const [isReady, setIsReady] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
+  
+  useEffect(() => {
+    setIsReady(false);
+    // Fail-safe: If player doesn't signal ready within 5s, force it (helps with origin issues)
+    const timeout = setTimeout(() => {
+      setIsReady(true);
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, [url]);
+
+  const [error, setError] = useState<string | null>(null);
+
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black border border-[#2a2a2a] group">
+    <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[#0a0a0a] border border-[#2a2a2a] group">
+      {(!isReady || isBuffering) && !error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10 transition-opacity">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-500/20 border-t-indigo-500" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 animate-pulse">
+              {isBuffering ? "Buffering..." : "Loading Video..."}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-20 p-8 text-center">
+          <div className="rounded-full bg-rose-500/10 p-4 mb-4">
+            <Settings className="h-10 w-10 text-rose-500" />
+          </div>
+          <h4 className="text-lg font-bold text-white mb-2">Video Playback Error</h4>
+          <p className="text-sm text-zinc-500 max-w-sm mb-6">
+            We're having trouble loading the video preview. {error}
+          </p>
+          <button 
+             onClick={() => { setError(null); setIsReady(false); }}
+             className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-sm font-bold transition-all"
+          >
+            Retry Loading
+          </button>
+        </div>
+      )}
+
       <ReactPlayer
         ref={playerRef}
         url={url}
@@ -44,13 +87,44 @@ export default function VideoPlayer({ url, onProgress, onDuration, seekTo, isPla
         volume={volume}
         playbackRate={playbackRate}
         onProgress={(state: any) => onProgress(state)}
-        onDuration={onDuration}
+        onDuration={(d: number) => {
+          onDuration(d);
+        }}
+        onReady={() => {
+          setIsReady(true);
+          setError(null);
+        }}
+        onBuffer={() => setIsBuffering(true)}
+        onBufferEnd={() => setIsBuffering(false)}
+        onError={(e: any) => {
+          console.error("DEBUG: Player Error:", e);
+          setIsReady(true);
+          setError("The video format might be unsupported or the connection was interrupted.");
+        }}
         progressInterval={100}
         controls={false}
+        pip={false}
+        config={{
+          file: {
+            attributes: {
+              crossOrigin: "anonymous",
+              controlsList: "nodownload"
+            }
+          },
+          youtube: {
+            playerVars: { 
+              rel: 0, 
+              modestbranding: 1,
+              origin: typeof window !== 'undefined' ? window.location.origin : undefined,
+              autoplay: 0,
+              iv_load_policy: 3,
+            }
+          }
+        }}
       />
 
       {/* Custom Controls Overlay */}
-      <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100 p-4">
+      <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100 p-4 z-30">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setPlaying(!playing)}

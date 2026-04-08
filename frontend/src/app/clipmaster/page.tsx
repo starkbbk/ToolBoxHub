@@ -57,7 +57,7 @@ export default function ClipMasterPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         icon="🎬"
-        title="ClipMaster"
+        title="YTClipMaster"
         description="Extract high-quality clips and highlights from your videos using AI."
       />
 

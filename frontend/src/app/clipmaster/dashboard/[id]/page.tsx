@@ -40,6 +40,7 @@ export default function DashboardPage() {
     updateClip, 
     deleteClip, 
     approveAll,
+    renderClips,
     filters,
     setFilters
   } = useClipStore();
@@ -85,11 +86,23 @@ export default function DashboardPage() {
 
   const handleExport = async (format: string) => {
     try {
-      toast.info(`Preparing ${format.toUpperCase()} export...`);
-      // Logic for export blob handling would go here
-      window.open(`${API_URL}/api/clipmaster/export/${projectId}?format=${format}`, '_blank');
+      const approvedCount = clips.filter(c => c.is_approved).length;
+      if (approvedCount === 0) {
+        toast.error("Please approve at least one clip first!");
+        return;
+      }
+      
+      const toastId = toast.loading("Processing approved clips... please wait.");
+      
+      // Trigger rendering of approved clips
+      await renderClips(projectId);
+      
+      toast.success(`Processing complete! Starting ${format.toUpperCase()} download...`, { id: toastId });
+      
+      // Use the updated GET endpoint with only_approved=true
+      window.open(`${API_URL}/api/clipmaster/export/${projectId}?format=${format}&only_approved=true`, '_blank');
     } catch (err) {
-      toast.error("Export failed");
+      toast.error("Export failed: " + (err as any).message);
     }
   };
 
@@ -101,9 +114,11 @@ export default function DashboardPage() {
     );
   }
 
-  const videoUrl = currentProject?.source_type === "youtube" 
-    ? currentProject.source_url! 
-    : `${API_URL}/api/clipmaster/video/${projectId}`;
+  const videoUrl = currentProject?.file_path 
+    ? `${API_URL}/api/clipmaster/video/${projectId}`
+    : currentProject?.source_type === "youtube" 
+      ? currentProject.source_url! 
+      : `${API_URL}/api/clipmaster/video/${projectId}`;
 
   return (
     <div className="flex flex-col gap-8">
@@ -118,7 +133,7 @@ export default function DashboardPage() {
           </button>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400">Project Dashboard</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400">YTClipMaster Dashboard</span>
               <span className="text-zinc-600">•</span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">ID: {projectId}</span>
             </div>

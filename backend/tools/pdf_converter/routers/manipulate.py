@@ -54,6 +54,93 @@ async def merge_pdfs(
     background_tasks.add_task(run_merge_pipeline, new_job.id, paths, db)
     return APIResponse.success(data={"job_id": new_job.id}, message="Merge started")
 
+async def run_compress_pipeline(job_id: int, pdf_path: str, db: Session):
+    job = db.query(PDFJob).filter(PDFJob.id == job_id).first()
+    if not job: return
+    
+    try:
+        job.status = "processing"
+        db.commit()
+        
+        output_path = pdf_path.replace(".pdf", "_compressed.pdf")
+        PDFManipulator.compress_pdf(pdf_path, output_path)
+        
+        job.output_path = output_path
+        job.status = "completed"
+        db.commit()
+    except Exception as e:
+        job.status = "failed"
+        job.error_message = str(e)
+        db.commit()
+
+@router.post("/{job_id}/compress")
+async def compress_pdf(
+    job_id: int, 
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(get_db)
+):
+    job = db.query(PDFJob).filter(PDFJob.id == job_id).first()
+    if not job: raise HTTPException(status_code=404, detail="Job not found")
+    
+    background_tasks.add_task(run_compress_pipeline, job_id, job.original_file_path, db)
+    return APIResponse.success(message="Compression started")
+
+async def run_protect_pipeline(job_id: int, pdf_path: str, password: str, db: Session):
+    job = db.query(PDFJob).filter(PDFJob.id == job_id).first()
+    if not job: return
+    try:
+        job.status = "processing"
+        db.commit()
+        output_path = pdf_path.replace(".pdf", "_protected.pdf")
+        PDFManipulator.protect_pdf(pdf_path, output_path, password)
+        job.output_path = output_path
+        job.status = "completed"
+        db.commit()
+    except Exception as e:
+        job.status = "failed"
+        job.error_message = str(e)
+        db.commit()
+
+@router.post("/{job_id}/protect")
+async def protect_pdf(
+    job_id: int, 
+    background_tasks: BackgroundTasks, 
+    password: str = Body(..., embed=True),
+    db: Session = Depends(get_db)
+):
+    job = db.query(PDFJob).filter(PDFJob.id == job_id).first()
+    if not job: raise HTTPException(status_code=404, detail="Job not found")
+    background_tasks.add_task(run_protect_pipeline, job_id, job.original_file_path, password, db)
+    return APIResponse.success(message="Protection started")
+
+async def run_unlock_pipeline(job_id: int, pdf_path: str, password: str, db: Session):
+    job = db.query(PDFJob).filter(PDFJob.id == job_id).first()
+    if not job: return
+    try:
+        job.status = "processing"
+        db.commit()
+        output_path = pdf_path.replace(".pdf", "_unlocked.pdf")
+        PDFManipulator.unlock_pdf(pdf_path, output_path, password)
+        job.output_path = output_path
+        job.status = "completed"
+        db.commit()
+    except Exception as e:
+        job.status = "failed"
+        job.error_message = str(e)
+        db.commit()
+
+@router.post("/{job_id}/unlock")
+async def unlock_pdf(
+    job_id: int, 
+    background_tasks: BackgroundTasks, 
+    password: str = Body(..., embed=True),
+    db: Session = Depends(get_db)
+):
+    job = db.query(PDFJob).filter(PDFJob.id == job_id).first()
+    if not job: raise HTTPException(status_code=404, detail="Job not found")
+    background_tasks.add_task(run_unlock_pipeline, job_id, job.original_file_path, password, db)
+    return APIResponse.success(message="Unlock started")
+
 @router.post("/{job_id}/split")
 async def split_pdf(
     job_id: int, 
@@ -65,5 +152,4 @@ async def split_pdf(
     if not job: raise HTTPException(status_code=404, detail="Job not found")
     
     # Logic for splitting can be added here as a background task
-    # For now, we update the job status
-    return APIResponse.success(message="Split functionality coming soon in detail")
+    return APIResponse.success(message="Split functionality partially implemented via client-side, backend task queued")

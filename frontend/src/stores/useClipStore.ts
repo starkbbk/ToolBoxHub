@@ -19,6 +19,7 @@ interface ClipState {
   setActiveClip: (clipId: number | null) => void;
   setFilters: (filters: Partial<ClipState["filters"]>) => void;
   approveAll: (projectId: number) => Promise<void>;
+  renderClips: (projectId: number) => Promise<void>;
 }
 
 export const useClipStore = create<ClipState>((set, get) => ({
@@ -87,6 +88,23 @@ export const useClipStore = create<ClipState>((set, get) => ({
         clips: state.clips.map((c) => ({ ...c, is_approved: true })),
       }));
     } catch (err) {
+      console.error(err);
+    }
+  },
+
+  renderClips: async (projectId: number) => {
+    set({ loading: true });
+    try {
+      const response = await clipmaster.renderClips(projectId);
+      set((state) => ({
+        clips: state.clips.map((c) => {
+          const match = response.data.clips.find((rc: any) => rc.id === c.id);
+          return match ? { ...c, ...match } : c;
+        }),
+        loading: false
+      }));
+    } catch (err) {
+      set({ loading: false });
       console.error(err);
     }
   },

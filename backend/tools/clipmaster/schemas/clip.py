@@ -10,6 +10,7 @@ class ClipBase(BaseModel):
     confidence: int
     reason: str
     is_approved: bool = False
+    file_path: Optional[str] = None
     user_notes: Optional[str] = None
 
 class ClipCreate(ClipBase):

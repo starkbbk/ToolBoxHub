@@ -7,6 +7,7 @@ from shared.response import success_response, error_response
 from tools.clipmaster.models.clip import Clip
 from tools.clipmaster.schemas.clip import ClipResponse, ClipUpdate
 from tools.clipmaster.utils.time_formatter import timestamp_to_seconds
+from tools.clipmaster.services.clipper_service import process_approved_clips
 
 from pydantic import BaseModel
 
@@ -98,3 +99,11 @@ def bulk_action(project_id: int, req: BulkActionRequest, db: Session = Depends(g
         
     db.commit()
     return success_response({"affected": updated})
+
+@router.post("/clips/{project_id}/render-clips")
+def render_clips(project_id: int, db: Session = Depends(get_db)):
+    processed = process_approved_clips(project_id, db)
+    return success_response({
+        "processed_count": len(processed),
+        "clips": [ClipResponse.model_validate(c).model_dump() for c in processed]
+    })

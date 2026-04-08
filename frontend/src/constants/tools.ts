@@ -14,7 +14,7 @@ export interface Tool {
 export const TOOLS: Tool[] = [
   {
     id: "clipmaster",
-    name: "ClipMaster",
+    name: "YTClipMaster",
     description: "AI-powered video clip extractor and highlighter.",
     icon: Video,
     route: "/clipmaster",
@@ -36,7 +36,7 @@ export const TOOLS: Tool[] = [
     description: "Reduce image file size without losing quality.",
     icon: Image,
     route: "/image-compressor",
-    status: "coming_soon",
+    status: "active",
     glowColor: "rgba(16, 185, 129, 0.4)",
   },
   {
@@ -45,7 +45,7 @@ export const TOOLS: Tool[] = [
     description: "Convert speech to text with high accuracy.",
     icon: Mic,
     route: "/audio-transcriber",
-    status: "coming_soon",
+    status: "active",
     glowColor: "rgba(245, 158, 11, 0.4)",
   },
   {
@@ -54,7 +54,7 @@ export const TOOLS: Tool[] = [
     description: "Condense long articles into short summaries.",
     icon: AlignLeft,
     route: "/text-summarizer",
-    status: "coming_soon",
+    status: "active",
     glowColor: "rgba(139, 92, 246, 0.4)",
   },
 ];

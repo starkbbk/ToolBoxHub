@@ -73,7 +73,8 @@ def process_url(data: ProcessUrlRequest, db: Session = Depends(get_db)):
             title=dl_info["title"],
             source_type="youtube",
             source_url=url,
-            file_path=dl_info["file_path"],
+            file_path=dl_info["video_path"],
+            audio_path=dl_info["audio_path"],
             duration_seconds=dl_info["duration"],
             status="uploaded" # Now ready for processing
         )

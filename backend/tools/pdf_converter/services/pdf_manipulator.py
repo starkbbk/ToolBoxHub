@@ -42,3 +42,50 @@ class PDFManipulator:
             output_paths.append(filepath)
             
         return output_paths
+
+    @staticmethod
+    def compress_pdf(pdf_path: str, output_path: str):
+        """Compress PDF by using content stream compression."""
+        reader = PdfReader(pdf_path)
+        writer = PdfWriter()
+        
+        for page in reader.pages:
+            page.compress_content_streams()
+            writer.add_page(page)
+            
+        with open(output_path, "wb") as f:
+            writer.write(f)
+        writer.close()
+        return output_path
+
+    @staticmethod
+    def protect_pdf(pdf_path: str, output_path: str, password: str):
+        """Encrypt PDF with a password."""
+        reader = PdfReader(pdf_path)
+        writer = PdfWriter()
+        
+        for page in reader.pages:
+            writer.add_page(page)
+            
+        writer.encrypt(password)
+        
+        with open(output_path, "wb") as f:
+            writer.write(f)
+        writer.close()
+        return output_path
+
+    @staticmethod
+    def unlock_pdf(pdf_path: str, output_path: str, password: str):
+        """Decrypt PDF with a password."""
+        reader = PdfReader(pdf_path)
+        if reader.is_encrypted:
+            reader.decrypt(password)
+            
+        writer = PdfWriter()
+        for page in reader.pages:
+            writer.add_page(page)
+            
+        with open(output_path, "wb") as f:
+            writer.write(f)
+        writer.close()
+        return output_path

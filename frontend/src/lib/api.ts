@@ -41,6 +41,7 @@ export const clipmaster = {
   approveAll: (projectId: number) => api.post(`/api/clipmaster/clips/${projectId}/approve-all`),
   bulkAction: (projectId: number, clipIds: number[], action: string) => 
     api.post(`/api/clipmaster/clips/${projectId}/bulk-action`, { clip_ids: clipIds, action }),
+  renderClips: (projectId: number) => api.post(`/api/clipmaster/clips/${projectId}/render-clips`),
   exportClips: (projectId: number, format: string, onlyApproved: boolean) => 
     api.post(`/api/clipmaster/export/${projectId}`, { format, only_approved: onlyApproved }, { responseType: 'blob' }),
   getRubrics: () => api.get('/api/clipmaster/rubrics'),
