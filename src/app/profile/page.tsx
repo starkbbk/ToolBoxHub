@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/shared/ProtectedRoute';
 import { User, Mail, Shield, Zap, CreditCard, History, Trash2, LogOut, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'overview' | 'subscription' | 'settings'>('overview');
 
   const tabs = [
@@ -132,7 +134,7 @@ export default function ProfilePage() {
                 <div className="p-8 rounded-3xl bg-gradient-to-br from-indigo-600/20 to-violet-600/20 border border-indigo-500/20">
                   <div className="flex justify-between items-start mb-8">
                     <div>
-                      <h3 className="text-2xl font-black mb-2">Current Plan: {user?.subscription_plan.toUpperCase()}</h3>
+                      <h3 className="text-2xl font-black mb-2">Current Plan: {user?.subscription_plan?.toUpperCase() || 'FREE'}</h3>
                       <p className="text-zinc-400 text-sm">Your next billing date is April 24, 2024</p>
                     </div>
                     {user?.subscription_plan === 'free' ? (

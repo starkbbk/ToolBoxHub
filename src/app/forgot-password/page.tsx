@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { auth } from '@/lib/api';
-import { Mail, ArrowLeft, Loader2, Send } from 'lucide-react';
+import { Mail, ArrowLeft, Loader2, Send, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
