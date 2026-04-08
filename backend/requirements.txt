@@ -15,4 +15,3 @@ opencv-python==4.9.0.80
 numpy==1.26.4
 easyocr==1.7.1
 ffmpeg-python==0.2.0
--e ./tools/clipmaster  # Just in case there are local deps
