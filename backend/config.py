@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     openrouter_base_url: str = Field("https://openrouter.ai/api/v1", env="OPENROUTER_BASE_URL")
     ai_model: str = Field("qwen/qwen3.6-plus:free", env="AI_MODEL")
     groq_api_key: str = Field("", env="GROQ_API_KEY")
+    groq_base_url: str = Field("https://api.groq.com/openai/v1", env="GROQ_BASE_URL")
     
     class Config:
         env_file = ".env"
