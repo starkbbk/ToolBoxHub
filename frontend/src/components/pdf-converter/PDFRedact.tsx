@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import * as pdfjs from "pdfjs-dist";
+import * as pdfjs from "pdfjs-dist/build/pdf";
 import { PDFDocument, rgb } from "pdf-lib";
 import { 
   ShieldAlert, 

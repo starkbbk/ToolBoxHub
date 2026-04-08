@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import * as pdfjs from "pdfjs-dist";
-import * as XLSX from "xlsx";
+import * as pdfjs from "pdfjs-dist/build/pdf";
+import * as XLSX from "xlsx/xlsx.mjs";
 import { 
   Table, 
   Download, 

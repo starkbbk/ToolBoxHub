@@ -37,6 +37,9 @@ import PDFGrayscale from "@/components/pdf-converter/PDFGrayscale";
 import PDFCrop from "@/components/pdf-converter/PDFCrop";
 import PDFResize from "@/components/pdf-converter/PDFResize";
 import PDFRedact from "@/components/pdf-converter/PDFRedact";
+import PDFToPDFA from "@/components/pdf-converter/PDFToPDFA";
+import PDFCompare from "@/components/pdf-converter/PDFCompare";
+import PDFScan from "@/components/pdf-converter/PDFScan";
 
 export default function PDFConverterPage() {
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
@@ -78,6 +81,9 @@ export default function PDFConverterPage() {
       case "crop-pdf": return <PDFCrop />;
       case "resize-pdf": return <PDFResize />;
       case "redact-pdf": return <PDFRedact />;
+      case "pdf-to-pdfa": return <PDFToPDFA />;
+      case "compare": return <PDFCompare />;
+      case "scan": return <PDFScan />;
       default:
         return activeTool ? (
           <div className="flex flex-col items-center justify-center p-20 text-center space-y-6 animate-in fade-in zoom-in duration-500">

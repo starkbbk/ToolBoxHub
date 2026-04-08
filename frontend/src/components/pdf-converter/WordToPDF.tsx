@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import mammoth from "mammoth";
+import mammoth from "mammoth/mammoth.browser";
 import { 
   FileText, 
   Download, 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import * as pdfjs from "pdfjs-dist";
+import * as pdfjs from "pdfjs-dist/build/pdf";
 import { PDFDocument } from "pdf-lib";
 import { 
   Crop, 

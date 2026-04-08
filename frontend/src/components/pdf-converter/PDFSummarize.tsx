@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import * as pdfjs from "pdfjs-dist";
+import * as pdfjs from "pdfjs-dist/build/pdf";
 import { 
   Sparkles, 
   Download, 
