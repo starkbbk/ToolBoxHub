@@ -6,7 +6,7 @@ import psutil
 import logging
 
 from config import settings
-from database import engine, Base
+from database import get_database
 from shared.response import success_response
 
 # Import tools routers
@@ -20,15 +20,7 @@ from tools.text_remover.routers import router as text_remover_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Atomic DB Init - only if no other worker has done it
-    try:
-        if not os.path.exists('db_init.lock'):
-            with open('db_init.lock', 'w') as f:
-                f.write('locked')
-            Base.metadata.create_all(bind=engine)
-            logging.info("DATABASE INITIALIZED")
-    except Exception as e:
-        logging.warning(f"DB INIT SKIPPED: {e}")
+    logging.info("MONGODB CONNECTED")
     
     os.makedirs(os.path.join(settings.upload_dir, "clipmaster"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "pdf_converter"), exist_ok=True)
