@@ -33,7 +33,7 @@ export default function Home() {
       </section>
 
       {/* Tools Grid */}
-      <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {TOOLS.map((tool, index) => (
           <ToolCard
             key={tool.id}

@@ -109,7 +109,7 @@ export default function ToolCard({ name, description, icon: Icon, route, status,
         cursor: isActive ? 'pointer' : 'default'
       } as any}
       className={cn(
-        "group relative flex flex-col items-center p-8 text-center glass-card border-beam shine-sweep",
+        "group relative flex flex-col items-center p-5 text-center glass-card border-beam shine-sweep",
         !isVisible ? "reveal-hidden" : "reveal-visible",
         !isActive && "opacity-60 cursor-not-allowed grayscale"
       )}
@@ -124,15 +124,15 @@ export default function ToolCard({ name, description, icon: Icon, route, status,
         />
       )}
 
-      <div className="mb-8 relative p-4 rounded-xl glass-card transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]">
+      <div className="mb-3 relative p-2.5 rounded-xl glass-card transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]">
         <Icon className={cn(
-          "h-8 w-8 text-white transition-all duration-500",
+          "h-6 w-6 text-white transition-all duration-500",
           isHovered && "animate-pulse scale-110"
         )} />
       </div>
       
       <h3 className={cn(
-        "mb-6 text-xl font-bold text-white tracking-tight transition-all duration-300",
+        "mb-3 text-lg font-bold text-white tracking-tight transition-all duration-300",
         isHovered && "text-indigo-200 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
       )}>
         {name}
@@ -156,7 +156,7 @@ export default function ToolCard({ name, description, icon: Icon, route, status,
       </div>
 
       {isActive && (
-        <div className="mt-8 flex items-center text-sm font-bold text-indigo-400 transition-all duration-300 transform group-hover:translate-x-2 group-hover:text-indigo-200">
+        <div className="mt-4 flex items-center text-sm font-bold text-indigo-400 transition-all duration-300 transform group-hover:translate-x-2 group-hover:text-indigo-200">
           Open Tool <span className="ml-1">→</span>
         </div>
       )}
