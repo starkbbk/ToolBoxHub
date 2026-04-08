@@ -25,7 +25,7 @@ export default function RootLayout({
         <ScrollbarControl />
         <DynamicBackground />
         <Navbar />
-        <main className="flex-1 container mx-auto px-4 pt-12 pb-8">
+        <main className="flex-1 container mx-auto px-4 pt-28 pb-10 relative z-10">
           {children}
         </main>
         <Footer />
