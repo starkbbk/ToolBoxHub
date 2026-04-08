@@ -24,7 +24,7 @@ export default function TextRemover() {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
       <PageHeader 
-        title="Text & Thumbnail Remover"
+        title="Remove Text from Images/Video"
         description="Clean up any media by removing text overlays, watermarks, and subtitles with AI-powered inpainting."
         icon={Eraser}
       />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 import { 
   Video, 
   Download, 
@@ -11,7 +11,6 @@ import {
   Pause,
   ChevronLeft,
   ChevronRight,
-  Maximize2,
   AlertCircle,
   Zap,
   Sparkles,
@@ -19,7 +18,7 @@ import {
   Eye,
   X
 } from "lucide-react";
-import { createWorker } from "tesseract.js";
+import Tesseract from "tesseract.js";
 import PDFDropzone from "../pdf-converter/PDFDropzone";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -49,7 +48,6 @@ export default function VideoProcessor() {
   const [isDetecting, setIsDetecting] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   
-  // Interaction State
   const [activeMask, setActiveMask] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawStart, setDrawStart] = useState<{ x: number, y: number } | null>(null);
@@ -71,7 +69,6 @@ export default function VideoProcessor() {
     }
   };
 
-  // Video Navigation
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) videoRef.current.pause();
@@ -88,12 +85,11 @@ export default function VideoProcessor() {
 
   const stepFrame = (frames: number) => {
     if (videoRef.current) {
-      const fps = 30; // Approximation
+      const fps = 30;
       videoRef.current.currentTime += (frames / fps);
     }
   };
 
-  // Mask Management
   const addMask = (x: number, y: number, width: number, height: number) => {
     const newMask: MaskRegion = {
       id: `mask-${Date.now()}`,
@@ -110,48 +106,41 @@ export default function VideoProcessor() {
     if (activeMask === id) setActiveMask(null);
   };
 
-  // Canvas Interactions
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!canvasRef.current || outputVideo || processing) return;
-    
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
     setIsDrawing(true);
-    setDrawStart({ x, y });
+    setDrawStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     videoRef.current?.pause();
     setIsPlaying(false);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDrawing || !drawStart || !canvasRef.current) return;
-    setCurrentTime(videoRef.current?.currentTime || 0); // Trigger re-render for drawing
+    setCurrentTime(videoRef.current?.currentTime || 0); 
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
     if (!isDrawing || !drawStart || !canvasRef.current) return;
-    
     const rect = canvasRef.current.getBoundingClientRect();
     const endX = e.clientX - rect.left;
     const endY = e.clientY - rect.top;
-    
     const width = Math.abs(endX - drawStart.x);
     const height = Math.abs(endY - drawStart.y);
     const x = Math.min(drawStart.x, endX);
     const y = Math.min(drawStart.y, endY);
-    
-    if (width > 10 && height > 10) {
-      addMask(x, y, width, height);
-    }
-    
+    if (width > 10 && height > 10) addMask(x, y, width, height);
     setIsDrawing(false);
     setDrawStart(null);
   };
 
-  // AI Auto Detect
   const autoDetectText = async () => {
     if (!videoRef.current || !canvasRef.current) return;
+    if (videoRef.current.videoWidth === 0) {
+        toast.error("Video is not ready yet. Please wait.");
+        return;
+    }
+
     setIsDetecting(true);
     setStatus("Analyzing frame...");
 
@@ -162,8 +151,7 @@ export default function VideoProcessor() {
       const ctx = canvas.getContext("2d");
       ctx?.drawImage(videoRef.current, 0, 0);
       
-      const worker = await createWorker('eng');
-      const { data: { words } } = await worker.recognize(canvas);
+      const { data: { words } } = await Tesseract.recognize(canvas, 'eng');
       
       const rect = canvasRef.current.getBoundingClientRect();
       const scaleX = rect.width / videoRef.current.videoWidth;
@@ -182,82 +170,48 @@ export default function VideoProcessor() {
         }));
 
       setMasks([...masks, ...newMasks]);
-      await worker.terminate();
       toast.success(`Automatically detected ${newMasks.length} text regions!`);
     } catch (err) {
-      toast.error("Auto-detection failed.");
+      console.error(err);
+      toast.error("Auto-detection failed. Ensure you are connected to the internet.");
     } finally {
       setIsDetecting(false);
       setStatus("");
     }
   };
 
-  // Video Processing
   const processVideo = async () => {
     if (!file || masks.length === 0) {
       toast.error("Please add at least one removal mask.");
       return;
     }
-    
     setProcessing(true);
     setProgress(0);
     setStatus("Uploading video...");
 
     const formData = new FormData();
     formData.append("video", file);
-    
     const rect = canvasRef.current?.getBoundingClientRect();
-    const vWidth = videoRef.current?.videoWidth || 1;
-    const vHeight = videoRef.current?.videoHeight || 1;
-    const scaleX = vWidth / (rect?.width || 1);
-    const scaleY = vHeight / (rect?.height || 1);
+    const scaleX = (videoRef.current?.videoWidth || 1) / (rect?.width || 1);
+    const scaleY = (videoRef.current?.videoHeight || 1) / (rect?.height || 1);
 
-    const backendRegions = masks.map(m => ({
-      x: m.x * scaleX,
-      y: m.y * scaleY,
-      w: m.width * scaleX,
-      h: m.height * scaleY,
-      start_time: m.startTime,
-      end_time: m.endTime
-    }));
-
-    formData.append("regions", JSON.stringify(backendRegions));
+    formData.append("regions", JSON.stringify(masks.map(m => ({
+      x: m.x * scaleX, y: m.y * scaleY, w: m.width * scaleX, h: m.height * scaleY,
+      start_time: m.startTime, end_time: m.endTime
+    }))));
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 98) return prev;
-          const increment = prev < 20 ? 0.5 : (prev < 80 ? 0.2 : 0.05);
-          return prev + increment;
-        });
-        
-        setProgress(p => {
-          if (p < 20) setStatus("Uploading to AI core...");
-          else if (p < 50) setStatus("Extracting video frames...");
-          else if (p < 85) setStatus("Applying smart inpainting...");
-          else setStatus("Re-encoding video with audio...");
-          return p;
-        });
-      }, 500);
-
       const response = await axios.post(`${apiUrl}/api/text-remover/video`, formData);
-
-      clearInterval(progressInterval);
-      setProgress(100);
-
       if (response.data.status === "success") {
         setOutputVideo(`${apiUrl}${response.data.data.output_path}`);
         toast.success("Video cleaned successfully!");
-      } else {
-        throw new Error(response.data.message);
-      }
-    } catch (err: any) {
+      } else throw new Error(response.data.message);
+    } catch (err) {
       toast.error("Processing failed.");
-      console.error(err);
     } finally {
       setProcessing(false);
+      setProgress(100);
     }
   };
 
@@ -272,83 +226,30 @@ export default function VideoProcessor() {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-          {/* Main Workspace */}
           <div className="lg:col-span-3 space-y-6">
             <div className="relative rounded-[2.5rem] bg-black border-4 border-white/5 overflow-hidden shadow-2xl group ring-1 ring-white/10">
-               {/* Original Video Layer (Under) */}
-               <video 
-                 ref={videoRef}
-                 src={videoPreview!} 
-                 className="w-full h-auto object-contain max-h-[75vh]"
-                 onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                 onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-               />
-               
-               {/* Cleaned Video Layer (Top) */}
-               {outputVideo && (
-                 <video 
-                   src={outputVideo} 
-                   className={cn(
-                     "absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-300",
-                     showOriginal ? "opacity-0" : "opacity-100"
-                   )}
-                   controls
-                   autoPlay
-                 />
-               )}
-
-               {/* Interactive Overlay Layer */}
+               <video ref={videoRef} src={videoPreview!} className="w-full h-auto object-contain max-h-[75vh]" onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
+               {outputVideo && <video src={outputVideo} className={cn("absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-300", showOriginal ? "opacity-0" : "opacity-100")} controls autoPlay />}
                {!outputVideo && (
-                 <div 
-                   ref={canvasRef}
-                   onMouseDown={handleMouseDown}
-                   onMouseMove={handleMouseMove}
-                   onMouseUp={handleMouseUp}
-                   className="absolute inset-0 z-10 cursor-crosshair overflow-hidden"
-                 >
+                 <div ref={canvasRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} className="absolute inset-0 z-10 cursor-crosshair overflow-hidden">
                     {masks.map(m => (
-                      <div 
-                        key={m.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMask(m.id);
-                        }}
-                        className={cn(
-                          "absolute border-2 transition-all group/mask",
-                          activeMask === m.id 
-                            ? "border-indigo-500 bg-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.4)]" 
-                            : "border-white/30 bg-white/5 hover:border-white/50"
-                        )}
-                        style={{ left: m.x, top: m.y, width: m.width, height: m.height }}
-                      >
-                         <button 
-                            onClick={(e) => { e.stopPropagation(); deleteMask(m.id); }}
-                            className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-rose-600 flex items-center justify-center scale-0 group-hover/mask:scale-100 transition-transform hover:bg-rose-500"
-                         >
-                            <X className="h-3 w-3 text-white" />
-                         </button>
+                      <div key={m.id} onClick={(e) => { e.stopPropagation(); setActiveMask(m.id); }} className={cn("absolute border-2 transition-all group/mask", activeMask === m.id ? "border-indigo-500 bg-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.4)]" : "border-white/30 bg-white/5 hover:border-white/50")} style={{ left: m.x, top: m.y, width: m.width, height: m.height }}>
+                         <button onClick={(e) => { e.stopPropagation(); deleteMask(m.id); }} className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-rose-600 flex items-center justify-center scale-0 group-hover/mask:scale-100 transition-transform hover:bg-rose-500"><X className="h-3 w-3 text-white" /></button>
                       </div>
                     ))}
                  </div>
                )}
-
-               {/* Processing Overlay */}
                {(processing || isDetecting) && (
                  <div className="absolute inset-0 bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center gap-6 z-50">
                     <div className="relative h-32 w-32">
                        <div className="absolute inset-0 rounded-full border-[6px] border-indigo-500/10 border-t-indigo-500 animate-spin" />
-                       <div className="absolute inset-0 flex items-center justify-center">
-                          {isDetecting ? <Sparkles className="h-12 w-12 text-indigo-400 animate-pulse" /> : <Loader2 className="h-12 w-12 text-indigo-400 animate-spin" />}
-                       </div>
+                       <div className="absolute inset-0 flex items-center justify-center">{isDetecting ? <Sparkles className="h-12 w-12 text-indigo-400 animate-pulse" /> : <Loader2 className="h-12 w-12 text-indigo-400 animate-spin" />}</div>
                     </div>
                     <div className="text-center space-y-4 max-w-sm px-6">
                        <p className="text-white font-black tracking-[0.2em] uppercase text-sm animate-pulse">{status || "Preparing pipeline..."}</p>
                        {processing && (
                          <div className="space-y-2">
-                           <div className="w-64 h-2 bg-zinc-800 rounded-full overflow-hidden p-0.5">
-                              <div className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
-                           </div>
-                           <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{Math.floor(progress)}% Optimized</p>
+                           <div className="w-64 h-2 bg-zinc-800 rounded-full overflow-hidden p-0.5"><div className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full" style={{ width: `${progress}%` }} /></div>
                          </div>
                        )}
                     </div>
@@ -356,151 +257,56 @@ export default function VideoProcessor() {
                )}
             </div>
 
-            {/* Custom Controls Bar */}
             <div className="p-4 rounded-[2rem] bg-zinc-900/60 border border-white/10 backdrop-blur-md flex flex-wrap items-center justify-between gap-6">
                 <div className="flex items-center gap-6 flex-1 min-w-[300px]">
-                  <button onClick={togglePlay} className="h-12 w-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0">
-                    {isPlaying ? <Pause className="h-5 w-5 fill-black" /> : <Play className="h-5 w-5 fill-black ml-1" />}
-                  </button>
-                  
+                  <button onClick={togglePlay} className="h-12 w-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0">{isPlaying ? <Pause className="h-5 w-5 fill-black" /> : <Play className="h-5 w-5 fill-black ml-1" />}</button>
                   <div className="flex-1 space-y-2">
-                    <input 
-                      type="range" 
-                      min={0} 
-                      max={duration || 100} 
-                      step={0.1}
-                      value={currentTime}
-                      onChange={(e) => seek(parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-indigo-500"
-                    />
+                    <input type="range" min={0} max={duration || 100} step={0.1} value={currentTime} onChange={(e) => seek(parseFloat(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-indigo-500" />
                     <div className="flex justify-between text-[10px] font-black text-zinc-500 tracking-widest uppercase">
                        <span>{Math.floor(currentTime / 60)}:{(currentTime % 60).toFixed(0).padStart(2, '0')}</span>
                        <span>{Math.floor(duration / 60)}:{(duration % 60).toFixed(0).padStart(2, '0')}</span>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2 flex-shrink-0">
-                     <button onClick={() => stepFrame(-1)} className="p-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white transition-colors">
-                        <ChevronLeft className="h-4 w-4" />
-                     </button>
-                     <button onClick={() => stepFrame(1)} className="p-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white transition-colors">
-                        <ChevronRight className="h-4 w-4" />
-                     </button>
+                     <button onClick={() => stepFrame(-1)} className="p-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"><ChevronLeft className="h-4 w-4" /></button>
+                     <button onClick={() => stepFrame(1)} className="p-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"><ChevronRight className="h-4 w-4" /></button>
                   </div>
                 </div>
-
-                {outputVideo && (
-                  <button 
-                    onMouseDown={() => setShowOriginal(true)}
-                    onMouseUp={() => setShowOriginal(false)}
-                    className="flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Hold to View Original
-                  </button>
-                )}
+                {outputVideo && <button onMouseDown={() => setShowOriginal(true)} onMouseUp={() => setShowOriginal(false)} className="flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl"><Eye className="h-4 w-4" />Hold to View Original</button>}
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             <div className="p-6 rounded-[2.5rem] bg-zinc-900/40 border border-white/5 backdrop-blur-xl space-y-6 shadow-2xl ring-1 ring-white/5">
-               <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">Removal Layers</h4>
-                  <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold">{masks.length} active</span>
-               </div>
-               
+               <div className="flex items-center justify-between"><h4 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">Removal Layers</h4><span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold">{masks.length} active</span></div>
                <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                   {masks.length === 0 ? (
-                    <div className="py-10 text-center space-y-3 opacity-40">
-                       <MousePointer2 className="h-8 w-8 text-zinc-500 mx-auto" />
-                       <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-relaxed">
-                         Draw on the video <br/> to set removal masks
-                       </p>
-                    </div>
-                  ) : (
-                    masks.map((m, i) => (
-                      <div 
-                        key={m.id} 
-                        onClick={() => setActiveMask(m.id)}
-                        className={cn(
-                          "p-4 rounded-2xl border transition-all cursor-pointer group",
-                          activeMask === m.id 
-                            ? "bg-indigo-600 border-indigo-500 shadow-xl" 
-                            : "bg-black/40 border-white/5 hover:border-white/20"
-                        )}
-                      >
+                    <div className="py-10 text-center space-y-3 opacity-40"><MousePointer2 className="h-8 w-8 text-zinc-500 mx-auto" /><p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-relaxed">Draw on the video <br/> to set removal masks</p></div>
+                  ) : masks.map((m, i) => (
+                      <div key={m.id} onClick={() => setActiveMask(m.id)} className={cn("p-4 rounded-2xl border transition-all cursor-pointer group", activeMask === m.id ? "bg-indigo-600 border-indigo-500 shadow-xl" : "bg-black/40 border-white/5 hover:border-white/20")}>
                          <div className="flex items-center justify-between mb-2">
-                            <span className={cn("text-[10px] font-black uppercase tracking-widest", activeMask === m.id ? "text-white" : "text-zinc-500")}>
-                               Layer #{i + 1}
-                            </span>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); deleteMask(m.id); }}
-                              className={cn("p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity", activeMask === m.id ? "text-white/60 hover:text-white" : "text-zinc-600 hover:text-rose-500")}
-                            >
-                               <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                            <span className={cn("text-[10px] font-black uppercase tracking-widest", activeMask === m.id ? "text-white" : "text-zinc-500")}>Layer #{i + 1}</span>
+                            <button onClick={(e) => { e.stopPropagation(); deleteMask(m.id); }} className={cn("p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity", activeMask === m.id ? "text-white/60 hover:text-white" : "text-zinc-600 hover:text-rose-500")}><Trash2 className="h-3.5 w-3.5" /></button>
                          </div>
-                         <div className="flex items-center gap-2">
-                            <Clock className={cn("h-3 w-3", activeMask === m.id ? "text-white/60" : "text-indigo-400")} />
-                            <span className={cn("text-[10px] font-bold", activeMask === m.id ? "text-white" : "text-zinc-400")}>
-                               00:00 - {Math.floor(duration / 60)}:{(duration % 60).toFixed(0).padStart(2, '0')}
-                            </span>
-                         </div>
+                         <div className="flex items-center gap-2"><Clock className={cn("h-3 w-3", activeMask === m.id ? "text-white/60" : "text-indigo-400")} /><span className={cn("text-[10px] font-bold", activeMask === m.id ? "text-white" : "text-zinc-400")}>00:00 - {Math.floor(duration / 60)}:{(duration % 60).toFixed(0).padStart(2, '0')}</span></div>
                       </div>
                     ))
-                  )}
+                  }
                </div>
-
                <div className="space-y-3 pt-4 border-t border-white/5">
-                  <button 
-                    disabled={isDetecting || processing || !!outputVideo}
-                    onClick={autoDetectText}
-                    className="w-full py-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-                    Auto-Detect All Text
-                  </button>
-
+                  <button disabled={isDetecting || processing || !!outputVideo} onClick={autoDetectText} className="w-full py-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5"><Sparkles className="h-3.5 w-3.5 text-indigo-400" />Auto-Detect All Text</button>
                   {!outputVideo ? (
-                    <button 
-                      disabled={processing || masks.length === 0}
-                      onClick={processVideo}
-                      className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white rounded-[1.5rem] font-black tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 shadow-2xl shadow-indigo-600/30"
-                    >
-                      {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
-                      Process HQ Video
-                    </button>
+                    <button disabled={processing || masks.length === 0} onClick={processVideo} className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white rounded-[1.5rem] font-black tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 shadow-2xl shadow-indigo-600/30">{processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}Process HQ Video</button>
                   ) : (
                     <div className="space-y-3">
-                      <a 
-                        href={outputVideo}
-                        download="cleaned_video_hq.mp4"
-                        className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-[1.5rem] font-black tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 shadow-2xl shadow-emerald-600/30 no-underline"
-                      >
-                        <Download className="h-5 w-5" />
-                        Download Cleaned
-                      </a>
-                      <button 
-                        onClick={() => {
-                          setFile(null);
-                          setOutputVideo(null);
-                          setMasks([]);
-                        }}
-                        className="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mx-auto" />
-                      </button>
+                      <a href={outputVideo} download="cleaned_video_hq.mp4" className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-[1.5rem] font-black tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 shadow-2xl shadow-emerald-500/40 no-underline"><Download className="h-5 w-5" />Download Cleaned</a>
+                      <button onClick={() => { setFile(null); setOutputVideo(null); setMasks([]); }} className="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"><Trash2 className="h-3.5 w-3.5 mx-auto" /></button>
                     </div>
                   )}
                </div>
             </div>
-
             <div className="p-6 rounded-[2rem] bg-amber-500/5 border border-amber-500/10 flex items-start gap-3 ring-1 ring-amber-500/5">
-               <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-               <p className="text-[10px] text-amber-200/60 leading-relaxed font-medium italic">
-                 HQ processing takes 30-90s. Keep this tab active to prevent browser suspension.
-               </p>
+               <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" /><p className="text-[10px] text-amber-200/60 leading-relaxed font-medium italic">HQ processing takes 30-90s. Keep this tab active to prevent browser suspension.</p>
             </div>
           </div>
         </div>

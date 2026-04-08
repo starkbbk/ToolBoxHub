@@ -59,7 +59,7 @@ export const TOOLS: Tool[] = [
   },
   {
     id: "text-remover",
-    name: "Text Remover",
+    name: "Remove Text from Images/Video",
     description: "Remove text, watermarks, and thumbnails from images/videos.",
     icon: Eraser,
     route: "/text-remover",
