@@ -18,10 +18,6 @@ from tools.audio_transcriber.routers import router as audio_transcriber_router
 from tools.text_summarizer.routers import router as text_summarizer_router
 from tools.text_remover.routers import router as text_remover_router
 
-@app.get("/")
-async def root():
-    return {"status": "alive", "service": "ToolboxHub Backend", "msg": "API is online. Use /api/health for details."}
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -57,6 +53,10 @@ app.add_middleware(
 
 # Static Files for Production
 from fastapi.staticfiles import StaticFiles
+
+@app.get("/")
+async def root():
+    return {"status": "alive", "service": "ToolboxHub Backend", "msg": "API is online. Use /api/health for details."}
 
 # Ensure upload directories exist
 os.makedirs(settings.upload_dir, exist_ok=True)
