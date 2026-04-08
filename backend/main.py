@@ -18,6 +18,9 @@ from tools.audio_transcriber.routers import router as audio_transcriber_router
 from tools.text_summarizer.routers import router as text_summarizer_router
 from tools.text_remover.routers import router as text_remover_router
 
+# Ensure all models are imported before create_all()
+from tools.clipmaster.models.project import Project
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
