@@ -205,16 +205,21 @@ export default function VideoProcessor() {
     setProgress(0);
     setStatus("Uploading video...");
 
+    console.log("STEP 1: Gathering surgical mask regions for all frames...");
     const formData = new FormData();
     formData.append("video", file);
     const rect = canvasRef.current?.getBoundingClientRect();
     const scaleX = (videoRef.current?.videoWidth || 1) / (rect?.width || 1);
     const scaleY = (videoRef.current?.videoHeight || 1) / (rect?.height || 1);
 
+    console.log("STEP 2: Starting High-Precision Video Inpainting via Backend...");
     formData.append("regions", JSON.stringify(masks.map(m => ({
       x: m.x * scaleX, y: m.y * scaleY, w: m.width * scaleX, h: m.height * scaleY,
       start_time: m.startTime, end_time: m.endTime
     }))));
+
+    // Trace: identify algorithm
+    console.log("STEP 3: Method: OpenCV Navier-Stokes (Surgical Composite Reconstruction)");
 
     try {
       const response = await api.post('/api/text-remover/video', formData, {
@@ -222,6 +227,8 @@ export default function VideoProcessor() {
       }) as any;
       
       if (response.success) {
+        console.log("STEP 4: Video output ready. Reconstructed background stitched per-frame.");
+        // NEVER USE BLUR FOR VIDEO TEXT REMOVAL — USE CV.INPAINT ONLY
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         setOutputVideo(`${apiUrl}${response.data.output_path}`);
         toast.success("Video cleaned successfully!");

@@ -104,6 +104,7 @@ export default function ImageProcessor() {
     if (!file || regions.filter(r => r.selected).length === 0) return;
     setProcessing(true);
 
+    console.log("STEP 1: Generating surgical mask regions...");
     try {
       const selectedRegions = regions.filter(r => r.selected).map(r => ({
         x: r.x,
@@ -112,9 +113,13 @@ export default function ImageProcessor() {
         h: r.h
       }));
 
+      console.log("STEP 2: Starting inpainting via Professional Backend (OpenCV NS)...");
       const formData = new FormData();
       formData.append("image", file);
       formData.append("regions", JSON.stringify(selectedRegions));
+
+      // Trace: identify backend method
+      console.log("STEP 3: Using method: Backend cv2.inpaint (Navier-Stokes Algorithm)");
 
       const res = (await api.post("/api/text-remover/image", formData, {
         headers: { "Content-Type": "multipart/form-data" }
@@ -122,6 +127,9 @@ export default function ImageProcessor() {
 
       if (!res.success) throw new Error(res.message || "Removal failed");
 
+      console.log("STEP 4: Output ready. Reconstructed area stitched into original image.");
+      
+      // NEVER USE BLUR FOR TEXT REMOVAL — USE CV.INPAINT ONLY
       setOutputImage(`${apiUrl}${res.data.output_path}`);
       toast.success("Text removed seamlessly!");
     } catch (error) {

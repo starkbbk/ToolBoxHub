@@ -83,9 +83,10 @@ class OCRService:
             max_y = max(r['y'] + r['h'] for r in group)
             
             # Expanded Banner Logic:
-            # Padding is now tighter to prevent bleeding into faces
-            padding_x = 25
-            padding_y = 12
+            # Padding is now 0px to ensure the mask covers ONLY the detected text/banner
+            # and never bleeds into nearby sharp features like faces or sunglasses.
+            padding_x = 0
+            padding_y = 0
             
             ex = max(0, min_x - padding_x)
             ey = max(0, min_y - padding_y)
@@ -131,15 +132,14 @@ class InpainterService:
             x, y, rw, rh = int(r['x']), int(r['y']), int(r['w']), int(r['h'])
             cv2.rectangle(mask, (x, y), (x + rw, y + rh), 255, -1)
             
-        # Dilate mask to ensure edges are covered perfectly but tightly
-        mask = InpainterService._dilate_mask(mask, kernel_size=5)
+        # NEVER USE BLUR FOR TEXT REMOVAL — USE CV.INPAINT ONLY
+        # Dilate mask just slightly for anti-aliasing (tight 3px kernel)
+        mask = InpainterService._dilate_mask(mask, kernel_size=3)
 
-        # Apply inpainting using Navier-Stokes (often sharper than Telea)
-        # Reduced radius for more detail conservation
-        inpainted = cv2.inpaint(img, mask, 4, cv2.INPAINT_NS)
+        # Apply Navier-Stokes inpainting with a tight radius for maximum sharpness
+        inpainted = cv2.inpaint(img, mask, 3, cv2.INPAINT_NS)
         
-        # COMPOSITE RECONSTRUCTION:
-        # Crucial: Only take inpainted pixels where the mask was, preserve original pixels EVERYWHERE else
+        # COMPOSITE RECONSTRUCTION: Perfect pixel preservation outside the mask
         result = img.copy()
         result[mask > 0] = inpainted[mask > 0]
         
@@ -198,11 +198,11 @@ class InpainterService:
                 
                 # Inpaint if there are active regions
                 if has_active_regions:
-                    # Tighter dilation for video frames
-                    mask = InpainterService._dilate_mask(mask, kernel_size=5)
-                    inpainted_frame = cv2.inpaint(frame, mask, 4, cv2.INPAINT_NS)
+                    # NEVER USE BLUR FOR VIDEO TEXT REMOVAL
+                    mask = InpainterService._dilate_mask(mask, kernel_size=3)
+                    inpainted_frame = cv2.inpaint(frame, mask, 3, cv2.INPAINT_NS)
                     
-                    # Composite reconstruction for zero-blur outside mask
+                    # Composite reconstruction - 100% sharpness outside mask
                     cleaned_frame = frame.copy()
                     cleaned_frame[mask > 0] = inpainted_frame[mask > 0]
                 else:
