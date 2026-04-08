@@ -1,4 +1,4 @@
-import { Video, FileText, Image, Mic, AlignLeft } from "lucide-react";
+import { Video, FileText, Image, Mic, AlignLeft, Eraser } from "lucide-react";
 import { ReactNode } from "react";
 
 export interface Tool {
@@ -56,5 +56,14 @@ export const TOOLS: Tool[] = [
     route: "/text-summarizer",
     status: "active",
     glowColor: "rgba(139, 92, 246, 0.4)",
+  },
+  {
+    id: "text-remover",
+    name: "Text Remover",
+    description: "Remove text, watermarks, and thumbnails from images/videos.",
+    icon: Eraser,
+    route: "/text-remover",
+    status: "active",
+    glowColor: "rgba(99, 102, 241, 0.4)",
   },
 ];
