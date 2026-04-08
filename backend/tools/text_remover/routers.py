@@ -1,45 +1,30 @@
 import os
 import uuid
-from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks
-from typing import List, Optional
 import json
+import logging
+from fastapi import APIRouter, UploadFile, File, Form, Response
+from typing import List, Optional
+from fastapi.responses import FileResponse
 
 from config import settings
 from shared.response import success_response, error_response
-from .services import InpainterService, OCRService
+from .services import InpainterService, log_memory_usage
 
 router = APIRouter()
 inpainter = InpainterService()
-ocr = OCRService()
-
-@router.post("/detect")
-async def detect_text_regions(
-    image: UploadFile = File(...),
-):
-    """
-    Detect text regions in an image/frame using EasyOCR.
-    Returns bounding boxes for each detected text area.
-    """
-    try:
-        image_bytes = await image.read()
-        regions = ocr.detect_text(image_bytes)
-        return success_response({"regions": regions, "count": len(regions)})
-    except Exception as e:
-        return error_response(str(e))
-
+logger = logging.getLogger(__name__)
 
 @router.post("/image")
-async def remove_text_image(
+async def inpaint_image_endpoint(
     image: UploadFile = File(...),
     regions: str = Form(...), # JSON string of regions: [{"x": 10, "y": 20, "w": 30, "h": 40}, ...]
-    radius: int = Form(10)
+    radius: int = Form(7)
 ):
     """
-    Remove text from an image by providing the region coordinates.
-    The backend generates a dilated mask for seamless inpainting.
+    Surgical inpainting endpoint for images.
+    Accepts original image + mask data from frontend Tesseract.js.
     """
     try:
-        # Save uploads
         job_id = str(uuid.uuid4())
         upload_dir = os.path.join(settings.upload_dir, "text_remover", job_id)
         os.makedirs(upload_dir, exist_ok=True)
@@ -47,30 +32,53 @@ async def remove_text_image(
         image_path = os.path.join(upload_dir, "original.png")
         output_path = os.path.join(upload_dir, "cleaned.png")
         
+        # Save original
         with open(image_path, "wb") as f:
             f.write(await image.read())
             
         mask_regions = json.loads(regions)
             
-        # Process using the improved region-based inpainter
+        # Perform NS inpainting
         inpainter.inpaint_image(image_path, mask_regions, output_path, radius)
+        
+        log_memory_usage(f"Inpaint Image Complete - {job_id}")
         
         return success_response({
             "job_id": job_id,
             "output_path": f"/api/text-remover/download/{job_id}/cleaned.png"
         })
     except Exception as e:
+        logger.error(f"Inpaint error: {str(e)}")
+        return error_response(str(e))
+
+@router.post("/video-frame")
+async def inpaint_frame_endpoint(
+    frame: UploadFile = File(...),
+    regions: str = Form(...), # JSON string of regions
+    radius: int = Form(7)
+):
+    """
+    Surgical inpainting endpoint for single frames.
+    Used for frame-by-frame processing from frontend.
+    """
+    try:
+        frame_bytes = await frame.read()
+        mask_regions = json.loads(regions)
+        
+        result_bytes = inpainter.inpaint_frame_bytes(frame_bytes, mask_regions, radius)
+        
+        return Response(content=result_bytes, media_type="image/png")
+    except Exception as e:
+        logger.error(f"Frame inpaint error: {str(e)}")
         return error_response(str(e))
 
 @router.post("/video")
-async def remove_text_video(
+async def legacy_video_inpaint(
     video: UploadFile = File(...),
-    regions: str = Form(...), # JSON string of regions
-    background_tasks: BackgroundTasks = None
+    regions: str = Form(...),
 ):
     """
-    Remove text from a video. 
-    This is long-running, so we'll ideally use a background task and polling/WS.
+    Legacy video endpoint - still available for background processing.
     """
     try:
         job_id = str(uuid.uuid4())
@@ -84,12 +92,6 @@ async def remove_text_video(
             f.write(await video.read())
             
         mask_regions = json.loads(regions)
-        
-        # For this prototype, we'll run it synchronously but ideally it's background
-        # in_painter.inpaint_video(video_path, mask_regions, output_path)
-        
-        # Temporary: Running synchronously for immediate feedback in simple tasks
-        # If it takes > 30s, the request might timeout.
         inpainter.inpaint_video(video_path, mask_regions, output_path)
         
         return success_response({
@@ -99,7 +101,6 @@ async def remove_text_video(
     except Exception as e:
         return error_response(str(e))
 
-from fastapi.responses import FileResponse
 @router.get("/download/{job_id}/{filename}")
 async def download_file(job_id: str, filename: str):
     file_path = os.path.join(settings.upload_dir, "text_remover", job_id, filename)

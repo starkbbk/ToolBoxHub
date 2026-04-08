@@ -2,6 +2,8 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+import psutil
+import logging
 
 from config import settings
 from database import engine, Base
@@ -25,6 +27,11 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.join(settings.upload_dir, "pdf_converter"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "image_compressor"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "text_remover"), exist_ok=True)
+    
+    # Log memory at startup
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info().rss / 1024 / 1024
+    logging.info(f"API STARTUP MEMORY: {mem:.2f} MB")
     yield
     # Shutdown
 
@@ -58,9 +65,13 @@ app.include_router(text_remover_router, prefix="/api/text-remover")
 
 @app.get("/api/health")
 def health_check():
+    process = psutil.Process(os.getpid())
+    mem_mb = process.memory_info().rss / 1024 / 1024
+    
     return success_response({
         "status": "ok",
         "version": settings.app_version,
+        "memory_usage_mb": round(mem_mb, 2),
         "tools": [
             {"id": "clipmaster", "status": "active"},
             {"id": "pdf-converter", "status": "active"},
