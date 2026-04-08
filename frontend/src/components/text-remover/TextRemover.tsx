@@ -11,10 +11,10 @@ import {
   Maximize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ImageProcessor from "./ImageProcessor";
-import VideoProcessor from "./VideoProcessor";
-import ThumbnailCleaner from "./ThumbnailCleaner";
-import PageHeader from "../shared/PageHeader";
+import ImageProcessor from "@/components/text-remover/ImageProcessor";
+import VideoProcessor from "@/components/text-remover/VideoProcessor";
+import ThumbnailCleaner from "@/components/text-remover/ThumbnailCleaner";
+import PageHeader from "@/components/shared/PageHeader";
 
 type RemoverMode = "image" | "video" | "thumbnail";
 

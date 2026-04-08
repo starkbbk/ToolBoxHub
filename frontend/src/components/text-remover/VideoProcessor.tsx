@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { 
   Video, 
   Download, 
@@ -8,11 +8,9 @@ import {
   Trash2, 
   Clock,
   Play,
-  CheckCircle2,
   AlertCircle
 } from "lucide-react";
 import PDFDropzone from "../pdf-converter/PDFDropzone";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -34,7 +32,6 @@ export default function VideoProcessor() {
   const [outputVideo, setOutputVideo] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [currentTime, setCurrentTime] = useState(0);
 
   const handleFileSelected = (files: File[]) => {
     if (files.length > 0) {
@@ -51,7 +48,6 @@ export default function VideoProcessor() {
   };
 
   const addRegionAtCurrentTime = () => {
-    // Default region in center
     setRegions(prev => [...prev, {
       x: 100, y: 100, w: 200, h: 50,
       start_time: 0,
@@ -72,20 +68,19 @@ export default function VideoProcessor() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const response = await axios.post(`${apiUrl}/api/text-remover/video`, formData, {
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total!);
-          setProgress(Math.min(percentCompleted, 20)); // Upload is first 20%
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+          setProgress(Math.min(percentCompleted, 20));
         }
       });
 
       if (response.data.status === "success") {
-        // Backend processing simulation (since we're running it sync in router for now)
         setProgress(100);
         setOutputVideo(`${apiUrl}${response.data.data.output_path}`);
         toast.success("Video cleaned successfully!");
       } else {
         throw new Error(response.data.message);
       }
-    } catch (err) {
+    } catch (err: any) {
       toast.error("Video processing failed. The file might be too large or the server timed out.");
       console.error(err);
     } finally {
@@ -104,7 +99,6 @@ export default function VideoProcessor() {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Preview Area */}
           <div className="lg:col-span-3 space-y-4">
             <div className="relative rounded-3xl bg-zinc-950/50 border border-white/5 overflow-hidden shadow-2xl">
                {!outputVideo ? (
@@ -113,7 +107,6 @@ export default function VideoProcessor() {
                    src={videoPreview!} 
                    className="w-full h-auto object-contain max-h-[70vh]"
                    controls
-                   onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                  />
                ) : (
                  <video 
@@ -123,7 +116,6 @@ export default function VideoProcessor() {
                  />
                )}
                
-               {/* Overlay for Bounding Boxes (Manual selection mockup) */}
                {!outputVideo && regions.length > 0 && (
                  <div className="absolute inset-0 pointer-events-none">
                     {regions.map((r, i) => (
@@ -158,7 +150,6 @@ export default function VideoProcessor() {
             </div>
           </div>
 
-          {/* Sidebar Controls */}
           <div className="lg:col-span-1 space-y-6">
             <div className="p-6 rounded-3xl bg-zinc-900/40 border border-white/5 space-y-6">
                <h4 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Video Masks</h4>

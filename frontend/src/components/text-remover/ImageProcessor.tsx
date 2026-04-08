@@ -56,7 +56,8 @@ export default function ImageProcessor() {
     try {
       const worker = await createWorker('eng');
       const result = await worker.recognize(imgFile);
-      const { words } = result.data as any;
+      const data = result.data as any;
+      const words = data.words || [];
       
       const detectedRegions: TextRegion[] = words
         .filter((word: any) => word.confidence > 50)

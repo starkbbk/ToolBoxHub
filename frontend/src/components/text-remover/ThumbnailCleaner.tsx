@@ -36,7 +36,8 @@ export default function ThumbnailCleaner() {
     try {
       const worker = await createWorker('eng');
       const result = await worker.recognize(file);
-      const { words } = result.data as any;
+      const data = result.data as any;
+      const words = data.words || [];
       
       const regions = words.map((word: any) => ({
         x: word.bbox.x0,
