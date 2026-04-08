@@ -83,10 +83,9 @@ class OCRService:
             max_y = max(r['y'] + r['h'] for r in group)
             
             # Expanded Banner Logic:
-            # Add generous padding to capture the semi-transparent background bar, icons, and rounded edges
-            # Users report banners are often 50-80px wider than text.
-            padding_x = 60
-            padding_y = 30
+            # Padding is now tighter to prevent bleeding into faces
+            padding_x = 25
+            padding_y = 12
             
             ex = max(0, min_x - padding_x)
             ey = max(0, min_y - padding_y)
@@ -132,11 +131,18 @@ class InpainterService:
             x, y, rw, rh = int(r['x']), int(r['y']), int(r['w']), int(r['h'])
             cv2.rectangle(mask, (x, y), (x + rw, y + rh), 255, -1)
             
-        # Dilate mask to ensure edges are covered
-        mask = InpainterService._dilate_mask(mask, kernel_size=7)
+        # Dilate mask to ensure edges are covered perfectly but tightly
+        mask = InpainterService._dilate_mask(mask, kernel_size=5)
 
-        # Apply inpainting
-        result = cv2.inpaint(img, mask, inpaint_radius, cv2.INPAINT_TELEA)
+        # Apply inpainting using Navier-Stokes (often sharper than Telea)
+        # Reduced radius for more detail conservation
+        inpainted = cv2.inpaint(img, mask, 4, cv2.INPAINT_NS)
+        
+        # COMPOSITE RECONSTRUCTION:
+        # Crucial: Only take inpainted pixels where the mask was, preserve original pixels EVERYWHERE else
+        result = img.copy()
+        result[mask > 0] = inpainted[mask > 0]
+        
         cv2.imwrite(output_path, result)
         return output_path
 
@@ -192,9 +198,13 @@ class InpainterService:
                 
                 # Inpaint if there are active regions
                 if has_active_regions:
-                    # Dilate mask for videos too
-                    mask = InpainterService._dilate_mask(mask, kernel_size=7)
-                    cleaned_frame = cv2.inpaint(frame, mask, 10, cv2.INPAINT_TELEA)
+                    # Tighter dilation for video frames
+                    mask = InpainterService._dilate_mask(mask, kernel_size=5)
+                    inpainted_frame = cv2.inpaint(frame, mask, 4, cv2.INPAINT_NS)
+                    
+                    # Composite reconstruction for zero-blur outside mask
+                    cleaned_frame = frame.copy()
+                    cleaned_frame[mask > 0] = inpainted_frame[mask > 0]
                 else:
                     cleaned_frame = frame
                 
