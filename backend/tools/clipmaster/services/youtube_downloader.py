@@ -9,19 +9,67 @@ def is_valid_youtube_url(url: str) -> bool:
     pattern = r"^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$"
     return bool(re.match(pattern, url))
 
+import httpx
+import uuid
+
+def download_via_cobalt(url: str, output_dir: str) -> dict:
+    """Fallback downloader using Cobalt API to bypass bot detection"""
+    print(f"DEBUG: Triggering Cobalt Fallback for URL: {url}")
+    try:
+        api_url = "https://api.cobalt.tools/api/json"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "ToolboxHub/1.0"
+        }
+        payload = {
+            "url": url,
+            "videoQuality": "720",
+            "audioFormat": "mp3",
+            "downloadMode": "audio", # For ClipMaster transcription
+            "isAudioOnly": True
+        }
+        
+        with httpx.Client(timeout=60.0) as client:
+            response = client.post(api_url, json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get("status") == "error":
+                raise YouTubeDownloaderError(f"Cobalt Error: {data.get('text')}")
+                
+            stream_url = data.get("url")
+            if not stream_url:
+                raise YouTubeDownloaderError("No stream URL in Cobalt response")
+                
+            # Download the file from the stream URL
+            audio_file = os.path.join(output_dir, f'audio_fallback_{uuid.uuid4().hex[:8]}.mp3')
+            with client.stream("GET", stream_url) as r:
+                r.raise_for_status()
+                with open(audio_file, "wb") as f:
+                    for chunk in r.iter_bytes():
+                        f.write(chunk)
+            
+            return {
+                "video_path": None,
+                "audio_path": audio_file,
+                "title": "YouTube Video (Cobalt Fallback)",
+                "duration": 0,
+                "thumbnail_url": ""
+            }
+    except Exception as e:
+        print(f"ERROR: Cobalt Fallback failed: {str(e)}")
+        raise YouTubeDownloaderError(f"All download methods failed. YouTube is very aggressive right now: {str(e)}")
+
 def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
     if not is_valid_youtube_url(url):
         raise YouTubeDownloaderError("Invalid YouTube URL")
 
-    # Define protocols to rotate through if they get blocked
-    # android_vr and tv often work where web/android fail
+    # Define protocols to rotate through
     clients = [
-        ['android_vr', 'ios'], # Mobile/VR Protocols (Very reliable)
-        ['tv', 'web'], # TV/Web fallback
-        ['android', 'ios', 'web'] # Final generic fallback
+        ['android_vr', 'ios'],
+        ['tv', 'web']
     ]
-
-    last_error = "Unknown Error"
 
     for client_list in clients:
         print(f"DEBUG: Trying download with client signature: {client_list}")
@@ -48,7 +96,6 @@ def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
             'quiet': True,
             'no_warnings': True,
             'nocheckcertificate': True,
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
             'extractor_args': {
                 'youtube': {
                     'player_client': client_list,
@@ -63,7 +110,6 @@ def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
                 info_dict = ydl.extract_info(url, download=True)
                 audio_file = os.path.join(output_dir, 'audio_source.mp3')
                 
-                # Check for audio file (handle different extensions)
                 if not os.path.exists(audio_file):
                     for f in os.listdir(output_dir):
                         if f.endswith('.mp3'):
@@ -78,9 +124,15 @@ def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
                     "thumbnail_url": info_dict.get('thumbnail', '')
                 }
         except Exception as e:
-            last_error = str(e)
-            print(f"DEBUG: Client signature {client_list} failed line: {last_error}")
+            err_msg = str(e).lower()
+            print(f"DEBUG: Client signature {client_list} failed: {err_msg}")
+            
+            # Check if this is a boat-block error
+            if "sign in to confirm" in err_msg or "bot" in err_msg or "403" in err_msg:
+                print("DEBUG: YouTube Bot Detection detected. Switching to Fallback...")
+                return download_via_cobalt(url, output_dir)
+            
             continue
 
-    print(f"ERROR: All clients blocked by YouTube: {last_error}")
-    raise YouTubeDownloaderError(f"YouTube block detected. Please try another video or contact admin: {last_error}")
+    # Final attempt with Cobalt if everything else is blocked
+    return download_via_cobalt(url, output_dir)
