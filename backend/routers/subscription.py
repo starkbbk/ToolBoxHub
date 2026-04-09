@@ -40,12 +40,14 @@ async def create_checkout_session(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    normalized_plan = plan.lower().replace(" ", "")
+    # Normalize: "Claude Max Plan" -> "claudemax", "Pro" -> "pro"
+    normalized_plan = plan.lower().replace(" ", "").replace("plan", "")
     plan_key = f"{normalized_plan}_{cycle.lower()}"
     price_id = STRIPE_PLAN_IDS.get(plan_key)
     
     if not price_id:
-        raise HTTPException(status_code=400, detail="Invalid plan or cycle")
+        logging.error(f"PRICE ID NOT FOUND: Requested plan_key='{plan_key}' (From plan='{plan}', cycle='{cycle}')")
+        raise HTTPException(status_code=400, detail=f"Invalid plan or cycle: {plan_key}")
     
     try:
         checkout_session = stripe.checkout.Session.create(

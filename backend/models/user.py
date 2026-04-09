@@ -7,6 +7,8 @@ class PlanType(str, Enum):
     FREE = "free"
     PRO = "pro"
     ENTERPRISE = "enterprise"
+    BUSINESS = "business"
+    CLAUDEMAX = "claude max plan"
 
 class SubscriptionStatus(str, Enum):
     ACTIVE = "active"

@@ -11,9 +11,44 @@ import { auth } from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, checkAuth } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'overview' | 'subscription' | 'settings'>('overview');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    // Check if we just returned from a successful Stripe checkout
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+
+    if (sessionId) {
+      handlePostCheckoutRefresh();
+    }
+  }, []);
+
+  const handlePostCheckoutRefresh = async () => {
+    setIsRefreshing(true);
+    const loadingToast = toast.loading('Synchronizing your subscription...');
+    
+    try {
+      // Small delay to ensure the webhook has had time to process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      if (checkAuth) {
+        await checkAuth();
+      }
+      
+      toast.success('Subscription active! Welcome to your new plan.', { id: loadingToast });
+      
+      // Clean up the URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    } catch (error) {
+      toast.error('Sync delayed. Your plan will update in a few moments.', { id: loadingToast });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: User },
