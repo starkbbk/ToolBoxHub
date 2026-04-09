@@ -109,8 +109,12 @@ async def get_me(email: str = Depends(get_current_user_email), db: AsyncIOMotorD
     user["id"] = str(user["_id"])
     return success_response(user)
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
 @router.post("/forgot-password")
-async def forgot_password(email: str = Body(...), db: AsyncIOMotorDatabase = Depends(get_database)):
+async def forgot_password(request: ForgotPasswordRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
+    email = request.email
     user = await get_user_by_email(db, email)
     if not user:
         # Don't reveal if user exists for security
@@ -124,8 +128,14 @@ async def forgot_password(email: str = Body(...), db: AsyncIOMotorDatabase = Dep
     
     return success_response({"message": "If the account exists, a reset link has been sent."})
 
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 @router.post("/reset-password")
-async def reset_password(token: str = Body(...), new_password: str = Body(...), db: AsyncIOMotorDatabase = Depends(get_database)):
+async def reset_password(request: ResetPasswordRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
+    token = request.token
+    new_password = request.new_password
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
         email = payload.get("sub")

@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await auth.me();
-      if (response.status === 'success') {
+      if (response.status === 'success' || response.success) {
         setUser(response.data);
       } else {
         localStorage.removeItem('token');
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const response = await auth.login(credentials);
-      if (response.status === 'success') {
+      if (response.status === 'success' || response.success) {
         localStorage.setItem('token', response.data.access_token);
         await checkAuth();
         toast.success('Successfully logged in!');
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const response = await auth.signup(userData);
-      if (response.status === 'success') {
+      if (response.status === 'success' || response.success) {
         toast.success('Account created! Please login.');
         router.push('/login');
       }
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await auth.google(token);
       console.log('Google Auth API Response:', response);
-      if (response.status === 'success') {
+      if (response.status === 'success' || response.success) {
         localStorage.setItem('token', response.data.access_token);
         await checkAuth();
         console.log('User state set, redirecting...');
