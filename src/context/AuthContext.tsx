@@ -96,9 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const response = await auth.google(token);
+      console.log('Google Auth API Response:', response);
       if (response.status === 'success') {
         localStorage.setItem('token', response.data.access_token);
         await checkAuth();
+        console.log('User state set, redirecting...');
         toast.success('Logged in with Google!');
         router.push('/');
       }
