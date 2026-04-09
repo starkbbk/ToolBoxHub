@@ -173,32 +173,57 @@ export default function ProfilePage() {
                 <div className="p-8 rounded-3xl bg-gradient-to-br from-indigo-600/20 to-violet-600/20 border border-indigo-500/20">
                   <div className="flex justify-between items-start mb-8">
                     <div>
-                      <h3 className="text-2xl font-black mb-2">Current Plan: {user?.subscription_plan?.toUpperCase() || 'FREE'}</h3>
-                      <p className="text-zinc-400 text-sm">Your next billing date is April 24, 2024</p>
+                      <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
+                        {user?.subscription_plan?.toUpperCase() || 'FREE'}
+                        {user?.subscription_plan && user?.subscription_plan !== 'free' && (
+                          <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-[10px] uppercase tracking-widest border border-green-500/20">
+                            Active
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-zinc-400 text-sm">
+                        {user?.subscription_plan && user?.subscription_plan !== 'free' 
+                          ? "Your subscription is currently active." 
+                          : "Upgrade to unlock premium tools and higher limits."}
+                      </p>
                     </div>
-                    {user?.subscription_plan === 'free' ? (
+                    {user?.subscription_plan === 'free' || !user?.subscription_plan ? (
                        <Zap className="h-10 w-10 text-zinc-600" />
                     ) : (
                       <CheckCircle2 className="h-10 w-10 text-green-500" />
                     )}
                   </div>
                   
-                  <div className="flex gap-4">
-                    {user?.subscription_plan === 'free' ? (
+                  <div className="flex flex-wrap gap-4">
+                    {user?.subscription_plan === 'free' || !user?.subscription_plan ? (
                       <button 
                         onClick={() => router.push('/pricing')}
-                        className="px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors"
+                        className="px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors shadow-xl shadow-white/10"
                       >
                         Upgrade Now
                       </button>
                     ) : (
-                      <button className="px-8 py-3 bg-white/10 text-white rounded-xl font-bold hover:bg-white/20 transition-colors">
-                        Manage Billing
+                      <button className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition-colors shadow-xl shadow-indigo-600/20">
+                        Manage Settings
                       </button>
                     )}
-                    <button className="px-8 py-3 bg-red-500/10 text-red-500 rounded-xl font-bold hover:bg-red-500/20 transition-colors">
-                      Cancel Plan
+                    <button 
+                      onClick={() => {
+                        toast.promise(checkAuth(), {
+                          loading: 'Syncing subscription...',
+                          success: 'Status refreshed!',
+                          error: 'Failed to sync'
+                        });
+                      }}
+                      className="px-8 py-3 bg-zinc-800 text-zinc-300 rounded-xl font-bold hover:bg-zinc-700 transition-colors"
+                    >
+                      Sync Subscription
                     </button>
+                    {user?.subscription_plan && user?.subscription_plan !== 'free' && (
+                      <button className="px-8 py-3 bg-red-500/10 text-red-500 rounded-xl font-bold hover:bg-red-500/20 transition-colors">
+                        Cancel Plan
+                      </button>
+                    )}
                   </div>
                 </div>
 

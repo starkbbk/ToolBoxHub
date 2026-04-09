@@ -89,15 +89,50 @@ async def stripe_webhook(request: Request, db: AsyncIOMotorDatabase = Depends(ge
         stripe_customer_id = session['customer']
         stripe_subscription_id = session['subscription']
         
-        # Ensure we map the metadata plan string to a valid PlanType enum value
-        # This handles cases where the metadata might be slightly different from the Enum
-        db_plan = plan.lower()
-        if "max" in db_plan:
-            db_plan = "claude max plan"
-        elif "business" in db_plan:
-            db_plan = "business"
+def normalize_plan_name(plan: str) -> str:
+    """Normalize Stripe metadata plan string to internal PlanType enum value."""
+    p = plan.lower()
+    if "max" in p or "claude" in p:
+        return "claude max plan"
+    if "business" in p:
+        return "business"
+    if "enterprise" in p:
+        return "enterprise"
+    if "pro" in p:
+        return "pro"
+    return "free"
+
+@router.post("/webhook")
+async def stripe_webhook(request: Request, db: AsyncIOMotorDatabase = Depends(get_database)):
+    payload = await request.body()
+    sig_header = request.headers.get('stripe-signature')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.stripe_webhook_secret
+        )
+    except ValueError:
+        logging.error("WEBHOOK ERROR: Invalid payload")
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError:
+        logging.error("WEBHOOK ERROR: Invalid signature")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Handle the event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        user_id = session['metadata'].get('user_id')
+        plan_meta = session['metadata'].get('plan', 'pro')
+        stripe_customer_id = session.get('customer')
+        stripe_subscription_id = session.get('subscription')
+        
+        if not user_id:
+            logging.error("WEBHOOK ERROR: No user_id in session metadata")
+            return {"status": "error", "message": "No user_id"}
             
-        logging.info(f"WEBHOOK: Updating User {user_id} to Plan {db_plan}")
+        db_plan = normalize_plan_name(plan_meta)
+        
+        logging.info(f"WEBHOOK: Updating User {user_id} to Plan {db_plan} (Raw: {plan_meta})")
         
         result = await db.users.update_one(
             {"_id": ObjectId(user_id)},
@@ -141,19 +176,18 @@ async def verify_session(
         if session.payment_status != 'paid':
             return success_response({"status": session.payment_status, "updated": False})
             
-        user_id = session['metadata']['user_id']
-        plan = session['metadata']['plan']
-        stripe_customer_id = session['customer']
-        stripe_subscription_id = session['subscription']
+        user_id = session['metadata'].get('user_id')
+        plan_meta = session['metadata'].get('plan', 'pro')
+        stripe_customer_id = session.get('customer')
+        stripe_subscription_id = session.get('subscription')
         
-        # Consistent normalization logic
-        db_plan = plan.lower()
-        if "max" in db_plan:
-            db_plan = "claude max plan"
-        elif "business" in db_plan:
-            db_plan = "business"
+        if not user_id:
+            logging.error("VERIFY-SESSION: No user_id in session metadata")
+            return success_response({"status": "error", "message": "No user_id"})
             
-        logging.info(f"VERIFY-SESSION: Manually updating User {user_id} to Plan {db_plan}")
+        db_plan = normalize_plan_name(plan_meta)
+        
+        logging.info(f"VERIFY-SESSION: Manually updating User {user_id} to Plan {db_plan} (Raw: {plan_meta})")
         
         await db.users.update_one(
             {"_id": ObjectId(user_id)},
