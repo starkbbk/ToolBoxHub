@@ -25,22 +25,26 @@ def download_video(url: str, output_dir: str, progress_callback=None) -> dict:
             except ValueError:
                 pass
 
+    # Define potential cookies file path
+    cookies_file = os.path.join(os.getcwd(), 'cookies.txt')
+    
     common_opts = {
         'outtmpl': os.path.join(output_dir, 'video_source.%(ext)s'),
         'noplaylist': True,
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'cookiefile': cookies_file if os.path.exists(cookies_file) else None,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Referer': 'https://www.google.com/',
         },
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios', 'web'],
+                'player_client': ['android', 'ios'], # Removed 'web' which is heavily guarded
                 'skip': ['hls', 'dash']
             }
         }
