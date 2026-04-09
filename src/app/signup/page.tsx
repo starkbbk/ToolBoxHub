@@ -167,6 +167,7 @@ export default function SignupPage() {
             }}
             theme="filled_black"
             shape="circle"
+            use_fedcm_for_prompt={true}
           />
         </div>
 
