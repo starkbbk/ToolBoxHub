@@ -40,7 +40,9 @@ async def signup(user_data: UserCreate, db: AsyncIOMotorDatabase = Depends(get_d
     }
     
     result = await db.users.insert_one(user_dict)
-    user_dict["_id"] = str(result.inserted_id)
+    user_dict["id"] = str(result.inserted_id)
+    if "_id" in user_dict:
+        del user_dict["_id"]
     
     return success_response(user_dict)
 
@@ -87,11 +89,17 @@ async def google_auth(request: GoogleAuthRequest, db: AsyncIOMotorDatabase = Dep
             }
             result = await db.users.insert_one(user_dict)
             user = user_dict
-            user["_id"] = str(result.inserted_id)
+            user["id"] = str(result.inserted_id)
         else:
             # Update google_id if not present
             if not user.get("google_id"):
                 await db.users.update_one({"_id": user["_id"]}, {"$set": {"google_id": google_id, "profile_picture": picture}})
+            # Ensure id string is present for the response
+            user["id"] = str(user["_id"])
+        
+        # Remove the _id field to avoid serialization errors
+        if "_id" in user:
+            del user["_id"]
         
         access_token = create_access_token(data={"sub": email})
         return success_response({"access_token": access_token, "token_type": "bearer"})
@@ -105,8 +113,9 @@ async def get_me(email: str = Depends(get_current_user_email), db: AsyncIOMotorD
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Convert _id to id string for response
+    # Convert _id to id string and remove _id to avoid serialization errors
     user["id"] = str(user["_id"])
+    del user["_id"]
     return success_response(user)
 
 class ForgotPasswordRequest(BaseModel):
