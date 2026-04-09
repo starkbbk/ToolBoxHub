@@ -36,7 +36,7 @@ export default function URLInput({ value, onChange }: URLInputProps) {
         <div className="absolute left-4 top-1/2 -translate-y-1/2">
           <Play className={cn(
             "h-5 w-5",
-            isValid === true ? "text-red-500" : "text-zinc-500"
+            isValid === true ? "text-red-500" : "text-muted-foreground"
           )} />
         </div>
         <input
@@ -45,8 +45,8 @@ export default function URLInput({ value, onChange }: URLInputProps) {
           onChange={(e) => onChange(e.target.value)}
           placeholder="https://www.youtube.com/watch?v=..."
           className={cn(
-            "h-14 w-full rounded-2xl border bg-[#1a1a1a] pl-12 pr-32 text-white outline-none transition-all focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20",
-            isValid === true ? "border-green-500/30" : isValid === false ? "border-red-500/30" : "border-[#2a2a2a]"
+            "h-14 w-full rounded-2xl border bg-card pl-12 pr-32 text-foreground outline-none transition-all focus:border-primary/50 focus:ring-1 focus:ring-primary/20",
+            isValid === true ? "border-green-500/30" : isValid === false ? "border-red-500/30" : "border-border"
           )}
         />
         <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-2">
@@ -54,7 +54,7 @@ export default function URLInput({ value, onChange }: URLInputProps) {
           {isValid === false && <AlertCircle className="h-5 w-5 text-red-500" />}
           <button
             onClick={handlePaste}
-            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800"
+            className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-background border border-border"
           >
             Paste
           </button>

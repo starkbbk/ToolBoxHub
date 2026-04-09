@@ -26,6 +26,17 @@ STRIPE_PLAN_IDS = {
     "claudemax_yearly": settings.stripe_cla_yearly_id,
 }
 
+# Inverse mapping for price_id -> plan_name
+def get_plan_from_price_id(price_id: str) -> str:
+    for key, val in STRIPE_PLAN_IDS.items():
+        if val == price_id:
+            # key is like "pro_monthly"
+            plan_base = key.split('_')[0]
+            if plan_base == "claudemax":
+                return "claude max plan"
+            return plan_base
+    return "free"
+
 async def get_user_by_email(db: AsyncIOMotorDatabase, email: str):
     return await db.users.find_one({"email": email})
 
@@ -217,3 +228,69 @@ async def get_subscription_status(email: str = Depends(get_current_user_email), 
         "status": user.get("subscription_status", SubscriptionStatus.NONE),
         "usage": user.get("usage", {})
     })
+
+@router.get("/sync")
+async def sync_subscription(
+    email: str = Depends(get_current_user_email),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """
+    Proactively fetch the user's active subscriptions from Stripe and update the DB.
+    This fixes cases where webhooks were missed.
+    """
+    try:
+        # 1. Find the customer in Stripe by email
+        customers = stripe.Customer.list(email=email, limit=1).data
+        if not customers:
+            return success_response({"msg": "No Stripe customer found", "plan": "free"})
+        
+        customer = customers[0]
+        customer_id = customer.id
+        
+        # 2. List active subscriptions for this customer
+        subscriptions = stripe.Subscription.list(
+            customer=customer_id,
+            status='active',
+            limit=1,
+            expand=['data.default_payment_method']
+        ).data
+        
+        if not subscriptions:
+            # No active subscription? Ensure DB reflects that if it previously thought they were pro
+            await db.users.update_one(
+                {"email": email},
+                {"$set": {
+                    "subscription_plan": PlanType.FREE,
+                    "subscription_status": SubscriptionStatus.NONE,
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+            return success_response({"msg": "No active subscription found", "plan": "free"})
+        
+        # 3. We found an active subscription. Get the plan.
+        sub = subscriptions[0]
+        price_id = sub['items']['data'][0]['price']['id']
+        db_plan = get_plan_from_price_id(price_id)
+        
+        # 4. Update the DB
+        await db.users.update_one(
+            {"email": email},
+            {"$set": {
+                "subscription_plan": db_plan,
+                "subscription_status": SubscriptionStatus.ACTIVE,
+                "stripe_customer_id": customer_id,
+                "stripe_subscription_id": sub.id,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        logging.info(f"SYNC: Manually synced User {email} to Plan {db_plan}")
+        return success_response({
+            "msg": "Subscription synced successfully",
+            "plan": db_plan,
+            "status": "active"
+        })
+        
+    except Exception as e:
+        logging.error(f"SYNC ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -208,11 +208,16 @@ export default function ProfilePage() {
                       </button>
                     )}
                     <button 
-                      onClick={() => {
-                        toast.promise(checkAuth(), {
-                          loading: 'Syncing subscription...',
-                          success: 'Status refreshed!',
-                          error: 'Failed to sync'
+                      onClick={async () => {
+                        const syncPromise = async () => {
+                          await subscription.sync();
+                          if (checkAuth) await checkAuth();
+                        };
+
+                        toast.promise(syncPromise(), {
+                          loading: 'Syncing with Stripe...',
+                          success: 'Subscription synced successfully!',
+                          error: (err) => `Sync failed: ${err.message || 'Unknown error'}`
                         });
                       }}
                       className="px-8 py-3 bg-secondary text-foreground border border-border rounded-xl font-bold hover:bg-background transition-colors"

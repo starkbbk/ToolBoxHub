@@ -29,44 +29,44 @@ export default function UploadZone({ onFileSelect, selectedFile }: UploadZonePro
         <div
           {...getRootProps()}
           className={cn(
-            "group relative flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#2a2a2a] bg-[#1a1a1a] transition-all hover:border-indigo-500/50 hover:bg-[#222222]",
-            isDragActive && "border-indigo-500 bg-indigo-500/5"
+            "group relative flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-all hover:border-primary/50 hover:bg-secondary",
+            isDragActive && "border-primary bg-primary/5"
           )}
         >
           <input {...getInputProps()} />
           <div className="flex flex-col items-center gap-4">
-            <div className="rounded-full bg-zinc-900 p-4 transition-transform group-hover:scale-110">
-              <Upload className="h-8 w-8 text-zinc-400 group-hover:text-indigo-400" />
+            <div className="rounded-full bg-secondary p-4 transition-transform group-hover:scale-110">
+              <Upload className="h-8 w-8 text-muted-foreground group-hover:text-primary" />
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-white">
+              <p className="text-lg font-semibold text-foreground">
                 Drag & drop your video here
               </p>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 or click to browse files
               </p>
             </div>
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground/60">
               MP4, MKV, AVI, MOV, WEBM — Max 2GB
             </p>
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between rounded-2xl border border-[#2a2a2a] bg-[#1a1a1a] p-6">
+        <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-indigo-500/10 p-3">
-              <FileVideo className="h-6 w-6 text-indigo-400" />
+            <div className="rounded-xl bg-primary/10 p-3">
+              <FileVideo className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="font-medium text-white">{selectedFile.name}</p>
-              <p className="text-sm text-zinc-500">
+              <p className="font-medium text-foreground">{selectedFile.name}</p>
+              <p className="text-sm text-muted-foreground">
                 {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
               </p>
             </div>
           </div>
           <button
             onClick={() => onFileSelect(null)}
-            className="rounded-full p-2 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-white"
+            className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>

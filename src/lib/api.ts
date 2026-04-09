@@ -90,6 +90,7 @@ export const subscription = {
   verifySession: (sessionId: string) => 
     api.get(`/api/subscription/verify-session/${sessionId}`),
   getStatus: () => api.get('/api/subscription/status'),
+  sync: () => api.get('/api/subscription/sync'),
 };
 
 export default api;
