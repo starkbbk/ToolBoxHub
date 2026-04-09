@@ -30,7 +30,7 @@ export default function ProfilePage() {
             {user?.profile_picture ? (
               <img src={user.profile_picture} alt={user.name} className="h-full w-full rounded-full object-cover" />
             ) : (
-              user?.name.charAt(0).toUpperCase()
+              user?.name ? user.name.charAt(0).toUpperCase() : 'U'
             )}
             {user?.subscription_plan !== 'free' && (
               <div className="absolute -bottom-2 -right-2 bg-amber-400 p-2 rounded-full shadow-lg">

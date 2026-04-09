@@ -71,13 +71,13 @@ export default function Navbar() {
                     <Sparkles className="h-3 w-3 text-amber-400 fill-amber-400" />
                   )}
                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">
-                    {user?.name.split(' ')[0]}
+                    {user?.name ? user.name.split(' ')[0] : 'User'}
                   </span>
                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-xs font-bold border border-white/20">
                     {user?.profile_picture ? (
                       <img src={user.profile_picture} alt={user.name} className="h-full w-full rounded-full object-cover" />
                     ) : (
-                      user?.name.charAt(0).toUpperCase()
+                      user?.name ? user.name.charAt(0).toUpperCase() : 'U'
                     )}
                   </div>
                   <ChevronDown className={cn("h-3 w-3 text-zinc-500 transition-transform", isDropdownOpen && "rotate-180")} />
