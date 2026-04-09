@@ -40,7 +40,8 @@ async def create_checkout_session(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    plan_key = f"{plan.lower()}_{cycle.lower()}"
+    normalized_plan = plan.lower().replace(" ", "")
+    plan_key = f"{normalized_plan}_{cycle.lower()}"
     price_id = STRIPE_PLAN_IDS.get(plan_key)
     
     if not price_id:
