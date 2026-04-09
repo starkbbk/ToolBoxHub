@@ -18,8 +18,12 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str = Field("", env="STRIPE_WEBHOOK_SECRET")
     stripe_pro_monthly_id: str = Field("", env="STRIPE_PRO_MONTHLY_ID")
     stripe_ent_monthly_id: str = Field("", env="STRIPE_ENT_MONTHLY_ID")
+    stripe_bus_monthly_id: str = Field("", env="STRIPE_BUS_MONTHLY_ID")
+    stripe_cla_monthly_id: str = Field("", env="STRIPE_CLA_MONTHLY_ID")
     stripe_pro_yearly_id: str = Field("", env="STRIPE_PRO_YEARLY_ID")
     stripe_ent_yearly_id: str = Field("", env="STRIPE_ENT_YEARLY_ID")
+    stripe_bus_yearly_id: str = Field("", env="STRIPE_BUS_YEARLY_ID")
+    stripe_cla_yearly_id: str = Field("", env="STRIPE_CLA_YEARLY_ID")
     
     cors_origins: str = Field("http://localhost:3000,http://127.0.0.1:3000", env="CORS_ORIGINS")
     frontend_url: str = Field("http://localhost:3000", env="FRONTEND_URL")

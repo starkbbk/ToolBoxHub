@@ -65,6 +65,41 @@ const plans = [
     buttonText: 'Go Enterprise',
     highlight: false,
   },
+  {
+    name: 'Business',
+    price: { monthly: 99.00, yearly: 990 },
+    description: 'For professional agencies',
+    icon: Zap,
+    features: [
+      { text: 'Everything in Enterprise', included: true },
+      { text: '1GB file size limit', included: true },
+      { text: 'Team accounts (up to 20)', included: true },
+      { text: 'White-label reports', included: true },
+      { text: 'Custom API endpoints', included: true },
+      { text: '24/7 Priority support', included: true },
+      { text: 'Dedicated server access', included: true },
+    ],
+    buttonText: 'Go Business',
+    highlight: false,
+  },
+  {
+    name: 'Claude Max Plan',
+    price: { monthly: 299.00, yearly: 2990 },
+    description: 'The ultimate powerhouse',
+    icon: Crown,
+    features: [
+      { text: 'Everything in Business', included: true },
+      { text: '2GB file size limit (20x Pro)', included: true },
+      { text: 'Unlimited team accounts', included: true },
+      { text: 'Custom AI model training', included: true },
+      { text: 'Dedicated Account Manager', included: true },
+      { text: 'SLA Guarantee (99.9%)', included: true },
+      { text: 'On-premise deployment', included: true },
+    ],
+    buttonText: 'Max Potential',
+    highlight: false,
+    badge: 'Save 50% Yearly',
+  },
 ];
 
 export default function PricingPage() {
@@ -143,7 +178,7 @@ export default function PricingPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto px-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-8 max-w-[1800px] mx-auto px-4">
         {plans.map((plan, index) => (
           <motion.div
             key={plan.name}

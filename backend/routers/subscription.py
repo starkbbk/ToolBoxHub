@@ -18,8 +18,12 @@ stripe.api_key = settings.stripe_secret_key
 STRIPE_PLAN_IDS = {
     "pro_monthly": settings.stripe_pro_monthly_id,
     "enterprise_monthly": settings.stripe_ent_monthly_id,
+    "business_monthly": settings.stripe_bus_monthly_id,
+    "claudemax_monthly": settings.stripe_cla_monthly_id,
     "pro_yearly": settings.stripe_pro_yearly_id,
     "enterprise_yearly": settings.stripe_ent_yearly_id,
+    "business_yearly": settings.stripe_bus_yearly_id,
+    "claudemax_yearly": settings.stripe_cla_yearly_id,
 }
 
 async def get_user_by_email(db: AsyncIOMotorDatabase, email: str):
