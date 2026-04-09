@@ -125,6 +125,52 @@ async def stripe_webhook(request: Request, db: AsyncIOMotorDatabase = Depends(ge
         )
         
     return {"status": "success"}
+    
+@router.get("/verify-session/{session_id}")
+async def verify_session(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """
+    Directly verify a Stripe session ID and update the user if paid.
+    Acts as an immediate fallback for the webhook.
+    """
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        if session.payment_status != 'paid':
+            return success_response({"status": session.payment_status, "updated": False})
+            
+        user_id = session['metadata']['user_id']
+        plan = session['metadata']['plan']
+        stripe_customer_id = session['customer']
+        stripe_subscription_id = session['subscription']
+        
+        # Consistent normalization logic
+        db_plan = plan.lower()
+        if "max" in db_plan:
+            db_plan = "claude max plan"
+        elif "business" in db_plan:
+            db_plan = "business"
+            
+        logging.info(f"VERIFY-SESSION: Manually updating User {user_id} to Plan {db_plan}")
+        
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "subscription_plan": db_plan,
+                "subscription_status": SubscriptionStatus.ACTIVE,
+                "stripe_customer_id": stripe_customer_id,
+                "stripe_subscription_id": stripe_subscription_id,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        return success_response({"status": "paid", "updated": True, "plan": db_plan})
+        
+    except Exception as e:
+        logging.error(f"VERIFICATION ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/status")
 async def get_subscription_status(email: str = Depends(get_current_user_email), db: AsyncIOMotorDatabase = Depends(get_database)):

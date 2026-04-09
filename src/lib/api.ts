@@ -83,4 +83,12 @@ export const tools = {
   getHealth: () => api.get('/api/health'),
 };
 
+export const subscription = {
+  createCheckoutSession: (plan: string, cycle: string) => 
+    api.post('/api/subscription/create-checkout-session', { plan, cycle }),
+  verifySession: (sessionId: string) => 
+    api.get(`/api/subscription/verify-session/${sessionId}`),
+  getStatus: () => api.get('/api/subscription/status'),
+};
+
 export default api;

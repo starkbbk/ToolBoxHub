@@ -7,7 +7,7 @@ import ProtectedRoute from '@/components/shared/ProtectedRoute';
 import { User, Mail, Shield, Zap, CreditCard, History, Trash2, LogOut, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { auth } from '@/lib/api';
+import { auth, subscription } from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
@@ -22,18 +22,21 @@ export default function ProfilePage() {
     const sessionId = urlParams.get('session_id');
 
     if (sessionId) {
-      handlePostCheckoutRefresh();
+      handlePostCheckoutRefresh(sessionId);
     }
   }, []);
 
-  const handlePostCheckoutRefresh = async () => {
+  const handlePostCheckoutRefresh = async (sessionId: string) => {
     setIsRefreshing(true);
     const loadingToast = toast.loading('Synchronizing your subscription...');
     
     try {
-      // Small delay to ensure the webhook has had time to process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 1. Trigger direct verification in the backend
+      // This is much more reliable than waiting for the webhook
+      console.log('Verifying session:', sessionId);
+      await subscription.verifySession(sessionId);
       
+      // 2. Now refresh the local user state
       if (checkAuth) {
         await checkAuth();
       }
@@ -44,6 +47,7 @@ export default function ProfilePage() {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     } catch (error) {
+      console.error('Verification failed:', error);
       toast.error('Sync delayed. Your plan will update in a few moments.', { id: loadingToast });
     } finally {
       setIsRefreshing(false);
