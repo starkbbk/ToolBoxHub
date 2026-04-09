@@ -69,6 +69,7 @@ const plans = [
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
 
@@ -77,18 +78,30 @@ export default function PricingPage() {
       router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
+
+    if (planName.toLowerCase() === user?.subscription_plan?.toLowerCase()) {
+      toast.info("You're already on this plan!");
+      return;
+    }
     
+    if (planName === 'Free') return;
+
+    setLoadingPlan(planName);
     try {
       const response = await api.post('/api/subscription/create-checkout-session', {
         plan: planName,
         cycle: billingCycle
       });
       
-      if (response.status === 'success' && response.data.url) {
+      if (response.success && response.data.url) {
         window.location.href = response.data.url;
+      } else {
+        toast.error('Could not create checkout session');
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to start checkout');
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -190,14 +203,20 @@ export default function PricingPage() {
 
             <button
               onClick={() => handleUpgrade(plan.name)}
+              disabled={loadingPlan !== null || (plan.name.toLowerCase() === user?.subscription_plan?.toLowerCase())}
               className={cn(
                 "w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-[0.98]",
-                plan.highlight 
-                  ? "bg-indigo-500 text-white hover:bg-indigo-400 shadow-xl shadow-indigo-500/20" 
-                  : "bg-white/10 text-white hover:bg-white/20"
+                (plan.name.toLowerCase() === user?.subscription_plan?.toLowerCase())
+                  ? "bg-zinc-800 text-zinc-500 cursor-default"
+                  : plan.highlight 
+                    ? "bg-indigo-500 text-white hover:bg-indigo-400 shadow-xl shadow-indigo-500/20" 
+                    : "bg-white/10 text-white hover:bg-white/20",
+                loadingPlan === plan.name && "opacity-50 cursor-wait"
               )}
             >
-              {plan.name === 'Free' && user?.subscription_plan === 'free' ? 'Current Plan' : plan.buttonText}
+              {loadingPlan === plan.name ? 'Processing...' : 
+               (plan.name.toLowerCase() === user?.subscription_plan?.toLowerCase()) ? 'Current Plan' : 
+               plan.buttonText}
             </button>
           </motion.div>
         ))}

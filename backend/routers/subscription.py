@@ -3,6 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 import stripe
 from datetime import datetime
 from bson import ObjectId
+import logging
 
 from database import get_database
 from config import settings
@@ -17,6 +18,8 @@ stripe.api_key = settings.stripe_secret_key
 STRIPE_PLAN_IDS = {
     "pro_monthly": settings.stripe_pro_monthly_id,
     "enterprise_monthly": settings.stripe_ent_monthly_id,
+    "pro_yearly": settings.stripe_pro_yearly_id,
+    "enterprise_yearly": settings.stripe_ent_yearly_id,
 }
 
 async def get_user_by_email(db: AsyncIOMotorDatabase, email: str):
@@ -45,8 +48,8 @@ async def create_checkout_session(
             payment_method_types=['card'],
             line_items=[{'price': price_id, 'quantity': 1}],
             mode='subscription',
-            success_url=f"{settings.cors_origins.split(',')[0]}/profile?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{settings.cors_origins.split(',')[0]}/pricing",
+            success_url=f"{settings.frontend_url}/profile?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{settings.frontend_url}/pricing",
             metadata={
                 "user_id": str(user["_id"]),
                 "plan": plan.lower()
@@ -54,6 +57,7 @@ async def create_checkout_session(
         )
         return success_response({"url": checkout_session.url})
     except Exception as e:
+        logging.error(f"STRIPE ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/webhook")

@@ -18,8 +18,11 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str = Field("", env="STRIPE_WEBHOOK_SECRET")
     stripe_pro_monthly_id: str = Field("", env="STRIPE_PRO_MONTHLY_ID")
     stripe_ent_monthly_id: str = Field("", env="STRIPE_ENT_MONTHLY_ID")
+    stripe_pro_yearly_id: str = Field("", env="STRIPE_PRO_YEARLY_ID")
+    stripe_ent_yearly_id: str = Field("", env="STRIPE_ENT_YEARLY_ID")
     
     cors_origins: str = Field("http://localhost:3000,http://127.0.0.1:3000", env="CORS_ORIGINS")
+    frontend_url: str = Field("http://localhost:3000", env="FRONTEND_URL")
     upload_dir: str = Field("./uploads", env="UPLOAD_DIR")
     max_file_size_mb: int = Field(2048, env="MAX_FILE_SIZE_MB")
     
