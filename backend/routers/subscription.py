@@ -89,16 +89,29 @@ async def stripe_webhook(request: Request, db: AsyncIOMotorDatabase = Depends(ge
         stripe_customer_id = session['customer']
         stripe_subscription_id = session['subscription']
         
-        await db.users.update_one(
+        # Ensure we map the metadata plan string to a valid PlanType enum value
+        # This handles cases where the metadata might be slightly different from the Enum
+        db_plan = plan.lower()
+        if "max" in db_plan:
+            db_plan = "claude max plan"
+        elif "business" in db_plan:
+            db_plan = "business"
+            
+        logging.info(f"WEBHOOK: Updating User {user_id} to Plan {db_plan}")
+        
+        result = await db.users.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {
-                "subscription_plan": plan,
+                "subscription_plan": db_plan,
                 "subscription_status": SubscriptionStatus.ACTIVE,
                 "stripe_customer_id": stripe_customer_id,
                 "stripe_subscription_id": stripe_subscription_id,
                 "updated_at": datetime.utcnow()
             }}
         )
+        
+        if result.modified_count == 0:
+            logging.error(f"WEBHOOK: No user found or updated for ID {user_id}")
     
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
