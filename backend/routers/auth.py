@@ -53,8 +53,14 @@ async def login(email: str = Body(...), password: str = Body(...), db: AsyncIOMo
     access_token = create_access_token(data={"sub": user["email"]})
     return success_response({"access_token": access_token, "token_type": "bearer"})
 
+from pydantic import BaseModel
+
+class GoogleAuthRequest(BaseModel):
+    token: str
+
 @router.post("/google")
-async def google_auth(token: str = Body(...), db: AsyncIOMotorDatabase = Depends(get_database)):
+async def google_auth(request: GoogleAuthRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
+    token = request.token
     try:
         # Verify Google ID Token
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), settings.google_client_id)

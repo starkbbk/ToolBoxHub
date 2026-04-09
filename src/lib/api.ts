@@ -25,7 +25,13 @@ api.interceptors.response.use(
   (response: any) => response.data,
   (error: any) => {
     const errorData = error.response?.data;
-    const message = errorData?.detail || errorData?.message || (error as Error).message || 'An error occurred';
+    let message = errorData?.detail || errorData?.message || (error as Error).message || 'An error occurred';
+    
+    // Handle FastAPI validation error arrays
+    if (Array.isArray(message)) {
+      message = message[0]?.msg || JSON.stringify(message);
+    }
+    
     console.error('API Error:', message);
     
     // Attach the cleaned up message to the error object so catch blocks can use it
