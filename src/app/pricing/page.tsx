@@ -178,7 +178,7 @@ export default function PricingPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-8 max-w-[1800px] mx-auto px-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 xl:gap-4 max-w-[1800px] mx-auto px-4">
         {plans.map((plan, index) => (
           <motion.div
             key={plan.name}

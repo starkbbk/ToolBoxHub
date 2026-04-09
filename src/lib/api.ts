@@ -40,6 +40,7 @@ api.interceptors.response.use(
   }
 );
 
+// API methods categorized by service
 export const clipmaster = {
   upload: (file: File) => {
     const formData = new FormData();

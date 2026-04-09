@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/api';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 interface User {
   id: string;
@@ -38,22 +39,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
       const response = await auth.me();
-      if (response.status === 'success' || response.success) {
+      if (response && (response.status === 'success' || response.success)) {
         setUser(response.data);
       } else {
+        console.warn('Auth validation failed, clearing token');
         localStorage.removeItem('token');
+        setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed', error);
-      localStorage.removeItem('token');
+      console.error('Auth verification error:', error);
+      // Only clear token if it's a 401/403 or specific auth error
+      // Don't clear on network errors to avoid aggressive logout
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        localStorage.removeItem('token');
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
