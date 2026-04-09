@@ -65,8 +65,8 @@ export default function ClipMasterPage() {
         {/* Step 1: Upload */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">1. Choose your video</h2>
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">File or URL</span>
+            <h2 className="text-xl font-bold text-foreground">1. Choose your video</h2>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">File or URL</span>
           </div>
           
           <UploadZone 
@@ -78,8 +78,8 @@ export default function ClipMasterPage() {
           />
 
           <div className="relative flex items-center justify-center py-4">
-            <div className="h-px w-full bg-[#2a2a2a]" />
-            <span className="absolute bg-[#0a0a0a] px-4 text-xs font-bold text-zinc-600">OR</span>
+            <div className="h-px w-full bg-border" />
+            <span className="absolute bg-background px-4 text-xs font-bold text-muted-foreground">OR</span>
           </div>
 
           <URLInput 
@@ -114,8 +114,8 @@ export default function ClipMasterPage() {
         <section className="pt-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-zinc-500" />
-              <h2 className="text-xl font-bold text-white">Recent Projects</h2>
+              <History className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-xl font-bold text-foreground">Recent Projects</h2>
             </div>
             <button 
               onClick={() => router.push('/clipmaster/history')}
@@ -126,8 +126,8 @@ export default function ClipMasterPage() {
           </div>
 
           {projects.length === 0 ? (
-            <div className="rounded-2xl border border-[#2a2a2a] border-dashed p-12 text-center">
-              <p className="text-zinc-500">No projects yet. Upload a video to get started!</p>
+            <div className="rounded-2xl border border-border border-dashed p-12 text-center bg-card/30">
+              <p className="text-muted-foreground text-sm">No projects yet. Upload a video to get started!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -135,12 +135,12 @@ export default function ClipMasterPage() {
                 <div 
                   key={p.id}
                   onClick={() => router.push(`/clipmaster/dashboard/${p.id}`)}
-                  className="flex flex-col gap-3 rounded-2xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 transition-all hover:border-[#3a3a3a] hover:bg-[#222222] cursor-pointer"
+                  className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/30 hover:bg-secondary/50 cursor-pointer shadow-sm"
                 >
-                  <p className="font-bold text-white line-clamp-1">{p.title}</p>
+                  <p className="font-bold text-foreground line-clamp-1">{p.title}</p>
                   <div className="flex items-center justify-between mt-auto">
-                    <span className="text-xs font-medium text-zinc-500 uppercase">{p.status}</span>
-                    <span className="text-xs text-zinc-600">{new Date(p.created_at).toLocaleDateString()}</span>
+                    <span className="text-xs font-medium text-muted-foreground uppercase">{p.status}</span>
+                    <span className="text-xs text-muted-foreground/60">{new Date(p.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
               ))}

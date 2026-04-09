@@ -10,6 +10,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { GOOGLE_CLIENT_ID } from "@/constants";
 
+import { ThemeProvider } from "@/context/ThemeProvider";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -23,18 +25,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scroll-smooth">
-      <body className={`${inter.className} bg-[#050505] text-white min-h-screen flex flex-col relative overflow-x-hidden`}>
+    <html lang="en" className="scroll-smooth">
+      <body className={`${inter.className} min-h-screen flex flex-col relative`}>
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || ""}>
           <AuthProvider>
-            <ScrollbarControl />
-            <DynamicBackground />
-            <Navbar />
-            <main className="flex-1 container mx-auto px-4 pt-28 pb-10 relative z-10">
-              {children}
-            </main>
-            <Footer />
-            <Toaster position="top-right" richColors theme="dark" />
+            <ThemeProvider>
+              <ScrollbarControl />
+              <DynamicBackground />
+              <Navbar />
+              <main className="flex-1 container mx-auto px-4 pt-28 pb-10 relative z-10">
+                {children}
+              </main>
+              <Footer />
+              <Toaster position="top-right" richColors theme="dark" />
+            </ThemeProvider>
           </AuthProvider>
         </GoogleOAuthProvider>
       </body>

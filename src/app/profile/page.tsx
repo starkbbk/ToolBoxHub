@@ -64,8 +64,8 @@ export default function ProfilePage() {
     <ProtectedRoute>
       <div className="max-w-6xl mx-auto py-10 px-4">
         {/* Profile Header */}
-        <div className="flex flex-col md:flex-row items-center gap-8 mb-12 p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl">
-          <div className="h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-4xl font-extrabold border-4 border-white/10 shadow-2xl relative">
+        <div className="flex flex-col md:flex-row items-center gap-8 mb-12 p-8 rounded-3xl bg-card/50 border border-border backdrop-blur-xl shadow-lg">
+          <div className="h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-4xl font-extrabold border-4 border-background shadow-2xl relative">
             {user?.profile_picture ? (
               <img src={user.profile_picture} alt={user.name} className="h-full w-full rounded-full object-cover" />
             ) : (
@@ -79,21 +79,21 @@ export default function ProfilePage() {
           </div>
           <div className="text-center md:text-left">
             <h1 className="text-4xl font-black tracking-tight mb-1">{user?.name}</h1>
-            <p className="text-zinc-500 mb-4">{user?.email}</p>
+            <p className="text-muted-foreground mb-4">{user?.email}</p>
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
               <span className={cn(
                 "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
                 user?.subscription_plan === 'free' 
-                  ? "bg-white/5 border-white/10 text-zinc-400" 
-                  : "bg-indigo-500/10 border-indigo-500/50 text-indigo-400"
+                  ? "bg-secondary text-muted-foreground border-border" 
+                  : "bg-primary/10 border-primary/50 text-primary"
               )}>
                 {user?.subscription_plan} Plan
               </span>
               <span className={cn(
                 "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
                 user?.subscription_status === 'active' 
-                  ? "bg-green-500/10 border-green-500/50 text-green-400" 
-                  : "bg-white/5 border-white/10 text-zinc-500"
+                  ? "bg-green-500/10 border-green-500/50 text-green-500" 
+                  : "bg-secondary text-muted-foreground border-border"
               )}>
                 {user?.subscription_status || 'Inactive'}
               </span>
@@ -102,7 +102,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-8 bg-white/5 p-1.5 rounded-2xl w-fit">
+        <div className="flex gap-2 mb-8 bg-secondary/50 p-1.5 rounded-2xl w-fit border border-border">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -110,8 +110,8 @@ export default function ProfilePage() {
               className={cn(
                 "flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all",
                 activeTab === tab.id 
-                  ? "bg-indigo-600 text-white shadow-lg" 
-                  : "text-zinc-500 hover:text-white hover:bg-white/5"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-background"
               )}
             >
               <tab.icon className="h-4 w-4" />
@@ -137,15 +137,15 @@ export default function ProfilePage() {
                     { label: 'Text Removals', count: user?.usage?.text_removals || 0, limit: 3 },
                     { label: 'Compressions', count: user?.usage?.image_compressions || 0, limit: 5 },
                   ].map((stat, i) => (
-                    <div key={i} className="p-6 rounded-3xl bg-white/5 border border-white/10">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">{stat.label}</p>
+                    <div key={i} className="p-6 rounded-3xl bg-card border border-border shadow-sm">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{stat.label}</p>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-black">{stat.count}</span>
-                        <span className="text-zinc-600 text-sm">/ {user?.subscription_plan === 'free' ? stat.limit : '∞'}</span>
+                        <span className="text-muted-foreground text-sm">/ {user?.subscription_plan === 'free' ? stat.limit : '∞'}</span>
                       </div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-full mt-4 overflow-hidden">
+                      <div className="h-1.5 w-full bg-secondary rounded-full mt-4 overflow-hidden">
                         <div 
-                          className="h-full bg-indigo-500" 
+                          className="h-full bg-primary" 
                           style={{ width: user?.subscription_plan === 'free' ? `${(stat.count / stat.limit) * 100}%` : '20%' }}
                         />
                       </div>
@@ -153,12 +153,12 @@ export default function ProfilePage() {
                   ))}
                 </div>
 
-                <div className="p-8 rounded-3xl bg-white/5 border border-white/10">
+                <div className="p-8 rounded-3xl bg-card border border-border shadow-sm">
                   <h3 className="text-xl font-black mb-6 flex items-center gap-2">
-                    <History className="h-5 w-5 text-indigo-400" /> Recent Activity
+                    <History className="h-5 w-5 text-primary" /> Recent Activity
                   </h3>
                   <div className="space-y-4">
-                    <p className="text-zinc-500 text-sm text-center py-10">No recent activity found.</p>
+                    <p className="text-muted-foreground text-sm text-center py-10">No recent activity found.</p>
                   </div>
                 </div>
               </motion.div>
@@ -170,25 +170,25 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-8"
               >
-                <div className="p-8 rounded-3xl bg-gradient-to-br from-indigo-600/20 to-violet-600/20 border border-indigo-500/20">
+                <div className="p-8 rounded-3xl bg-gradient-to-br from-indigo-600/20 to-violet-600/20 border border-primary/20">
                   <div className="flex justify-between items-start mb-8">
                     <div>
                       <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
                         {user?.subscription_plan?.toUpperCase() || 'FREE'}
                         {user?.subscription_plan && user?.subscription_plan !== 'free' && (
-                          <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-[10px] uppercase tracking-widest border border-green-500/20">
+                          <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] uppercase tracking-widest border border-green-500/20">
                             Active
                           </span>
                         )}
                       </h3>
-                      <p className="text-zinc-400 text-sm">
+                      <p className="text-muted-foreground text-sm">
                         {user?.subscription_plan && user?.subscription_plan !== 'free' 
                           ? "Your subscription is currently active." 
                           : "Upgrade to unlock premium tools and higher limits."}
                       </p>
                     </div>
                     {user?.subscription_plan === 'free' || !user?.subscription_plan ? (
-                       <Zap className="h-10 w-10 text-zinc-600" />
+                       <Zap className="h-10 w-10 text-muted-foreground" />
                     ) : (
                       <CheckCircle2 className="h-10 w-10 text-green-500" />
                     )}
@@ -198,12 +198,12 @@ export default function ProfilePage() {
                     {user?.subscription_plan === 'free' || !user?.subscription_plan ? (
                       <button 
                         onClick={() => router.push('/pricing')}
-                        className="px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors shadow-xl shadow-white/10"
+                        className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:scale-105 transition-all shadow-xl shadow-primary/20"
                       >
                         Upgrade Now
                       </button>
                     ) : (
-                      <button className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition-colors shadow-xl shadow-indigo-600/20">
+                      <button className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20">
                         Manage Settings
                       </button>
                     )}
@@ -215,22 +215,22 @@ export default function ProfilePage() {
                           error: 'Failed to sync'
                         });
                       }}
-                      className="px-8 py-3 bg-zinc-800 text-zinc-300 rounded-xl font-bold hover:bg-zinc-700 transition-colors"
+                      className="px-8 py-3 bg-secondary text-foreground border border-border rounded-xl font-bold hover:bg-background transition-colors"
                     >
                       Sync Subscription
                     </button>
                     {user?.subscription_plan && user?.subscription_plan !== 'free' && (
-                      <button className="px-8 py-3 bg-red-500/10 text-red-500 rounded-xl font-bold hover:bg-red-500/20 transition-colors">
+                      <button className="px-8 py-3 bg-destructive/10 text-destructive rounded-xl font-bold hover:bg-destructive/20 transition-colors">
                         Cancel Plan
                       </button>
                     )}
                   </div>
                 </div>
 
-                <div className="p-8 rounded-3xl bg-white/5 border border-white/10">
+                <div className="p-8 rounded-3xl bg-card border border-border shadow-sm">
                   <h3 className="text-xl font-black mb-6">Payment History</h3>
                   <div className="space-y-4">
-                    <p className="text-zinc-500 text-sm text-center py-6">No payment history available.</p>
+                    <p className="text-muted-foreground text-sm text-center py-6">No payment history available.</p>
                   </div>
                 </div>
               </motion.div>
@@ -245,21 +245,21 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <h3 className="text-xl font-black mb-4">Account Settings</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                      <label className="text-[10px] font-black uppercase text-zinc-500 mb-1 block">Full Name</label>
-                      <input type="text" defaultValue={user?.name} className="bg-transparent w-full font-bold outline-none" />
+                    <div className="p-4 rounded-2xl bg-secondary border border-border">
+                      <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Full Name</label>
+                      <input type="text" defaultValue={user?.name} className="bg-transparent w-full font-bold outline-none border-none text-foreground" />
                     </div>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 opacity-50">
-                      <label className="text-[10px] font-black uppercase text-zinc-500 mb-1 block">Email (Cannot change)</label>
-                      <div className="font-bold">{user?.email}</div>
+                    <div className="p-4 rounded-2xl bg-secondary/50 border border-border opacity-70">
+                      <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Email (Cannot change)</label>
+                      <div className="font-bold text-foreground">{user?.email}</div>
                     </div>
                   </div>
-                  <button className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm">Save Changes</button>
+                  <button className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-md shadow-primary/10">Save Changes</button>
                 </div>
 
-                <div className="pt-10 border-t border-white/10">
-                  <h3 className="text-xl font-black text-red-500 mb-4">Danger Zone</h3>
-                  <button className="flex items-center gap-2 px-6 py-3 bg-red-500/10 text-red-500 rounded-xl font-bold text-sm hover:bg-red-500/20 transition-colors">
+                <div className="pt-10 border-t border-border">
+                  <h3 className="text-xl font-black text-destructive mb-4">Danger Zone</h3>
+                  <button className="flex items-center gap-2 px-6 py-3 bg-destructive/10 text-destructive rounded-xl font-bold text-sm hover:bg-destructive/20 transition-colors border border-destructive/10">
                     <Trash2 className="h-4 w-4" /> Delete Account
                   </button>
                 </div>
@@ -269,23 +269,23 @@ export default function ProfilePage() {
 
           {/* Sidebar / Logout */}
           <div className="space-y-4">
-            <div className="p-8 rounded-3xl bg-white/5 border border-white/10 text-center">
-              <LogOut className="h-8 w-8 text-zinc-500 mx-auto mb-4" />
+            <div className="p-8 rounded-3xl bg-card border border-border text-center shadow-lg">
+              <LogOut className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
               <h4 className="font-bold mb-2">Logout for now?</h4>
-              <p className="text-zinc-500 text-sm mb-6">We'll save your preferences for your next visit.</p>
+              <p className="text-muted-foreground text-sm mb-6">We'll save your preferences for your next visit.</p>
               <button 
                 onClick={logout}
-                className="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
+                className="w-full py-4 bg-secondary hover:bg-background text-foreground border border-border rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-sm"
               >
                 Sign Out
               </button>
             </div>
             
-            <div className="p-6 rounded-3xl bg-indigo-600 text-white shadow-2xl shadow-indigo-500/20">
+            <div className="p-6 rounded-3xl bg-primary text-primary-foreground shadow-2xl shadow-primary/20">
               <AlertCircle className="h-6 w-6 mb-4" />
-              <h4 className="font-black mb-2 tracking-tight">Need Support?</h4>
-              <p className="text-indigo-100 text-xs mb-4">Our team is here to help with any technical or billing issues.</p>
-              <button className="w-full py-3 bg-white text-indigo-600 rounded-xl font-bold text-[10px] uppercase tracking-widest">
+              <h4 className="font-black mb-2 tracking-tight text-white">Need Support?</h4>
+              <p className="text-primary-foreground/80 text-xs mb-4">Our team is here to help with any technical or billing issues.</p>
+              <button className="w-full py-3 bg-white text-primary rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg">
                 Contact Help
               </button>
             </div>

@@ -118,44 +118,45 @@ export default function ToolCard({ name, description, icon: Icon, route, status,
         <div 
           className="absolute inset-0 pointer-events-none z-0"
           style={{ 
-            background: `radial-gradient(circle 200px at ${spotlight.x}% ${spotlight.y}%, rgba(255, 255, 255, 0.12), transparent 80%)` 
+            background: `radial-gradient(circle 200px at ${spotlight.x}% ${spotlight.y}%, var(--primary), transparent 80%)`,
+            opacity: 0.1
           }}
         />
       )}
 
-      <div className="mb-3 relative p-2.5 rounded-xl glass-card transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]">
+      <div className="mb-3 relative p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]">
         <Icon className={cn(
-          "h-6 w-6 text-white transition-all duration-500",
+          "h-6 w-6 transition-all duration-500",
           isHovered && "animate-pulse scale-110"
         )} />
       </div>
       
       <h3 className={cn(
-        "mb-3 text-lg font-bold text-white tracking-tight transition-all duration-300",
-        isHovered && "text-indigo-200 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+        "mb-3 text-lg font-bold text-foreground tracking-tight transition-all duration-300",
+        isHovered && "text-primary drop-shadow-[0_0_8px_rgba(99,102,241,0.2)]"
       )}>
         {name}
       </h3>
       
       <div className="flex items-center gap-2 relative z-10">
         {isActive ? (
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-green-400 px-3 py-1 rounded-full bg-green-500/10">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-green-500 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/10">
             <span className={cn(
-              "h-1.5 w-1.5 rounded-full bg-green-400",
+              "h-1.5 w-1.5 rounded-full bg-green-500",
               isHovered ? "animate-ping" : "animate-pulse"
             )} />
             Active
           </span>
         ) : (
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400 px-3 py-1 rounded-full bg-zinc-500/10">
-            <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground px-3 py-1 rounded-full bg-secondary border border-border">
+            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
             Coming Soon
           </span>
         )}
       </div>
 
       {isActive && (
-        <div className="mt-4 flex items-center text-sm font-bold text-indigo-400 transition-all duration-300 transform group-hover:translate-x-2 group-hover:text-indigo-200">
+        <div className="mt-4 flex items-center text-sm font-bold text-primary transition-all duration-300 transform group-hover:translate-x-2">
           Open Tool <span className="ml-1">→</span>
         </div>
       )}

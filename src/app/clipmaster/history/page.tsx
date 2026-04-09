@@ -48,27 +48,27 @@ export default function HistoryPage() {
         />
         
         <div className="relative w-full md:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input 
             type="text" 
             placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:border-indigo-500/50 outline-none transition-all"
+            className="w-full bg-secondary border border-border rounded-2xl py-3 pl-12 pr-4 text-sm text-foreground focus:border-primary/50 outline-none transition-all shadow-sm"
           />
         </div>
       </div>
 
       {loading && projects.length === 0 ? (
         <div className="flex h-[40vh] items-center justify-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500/20 border-t-indigo-500" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[40vh] rounded-3xl border-2 border-dashed border-[#2a2a2a] p-12 text-center">
-          <p className="text-zinc-500 text-lg mb-4">No projects found.</p>
+        <div className="flex flex-col items-center justify-center h-[40vh] rounded-3xl border-2 border-dashed border-border p-12 text-center bg-card/50">
+          <p className="text-muted-foreground text-lg mb-4">No projects found.</p>
           <button 
              onClick={() => router.push('/clipmaster')}
-             className="px-6 py-2.5 rounded-xl bg-indigo-500 text-sm font-bold text-white hover:bg-indigo-600 transition-colors"
+             className="px-6 py-2.5 rounded-xl bg-primary text-sm font-bold text-primary-foreground hover:scale-105 transition-all shadow-lg shadow-primary/20"
           >
             Create Your First Project
           </button>
@@ -88,15 +88,15 @@ export default function HistoryPage() {
                   filter: "blur(20px)",
                   transition: { duration: 0.5, ease: "backIn" }
                 }}
-                className="group relative flex flex-col rounded-3xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 transition-all hover:border-[#3a3a3a] hover:bg-[#202020] hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+                className="group relative flex flex-col rounded-3xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:bg-secondary/50 hover:shadow-xl shadow-sm"
               >
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="rounded-2xl bg-zinc-900 p-3 text-indigo-400 group-hover:scale-110 transition-transform">
+                    <div className="rounded-2xl bg-secondary p-3 text-primary group-hover:scale-110 transition-transform shadow-inner">
                       {project.source_type === "youtube" ? <Play className="h-6 w-6" /> : <FileVideo className="h-6 w-6" />}
                     </div>
                     <div>
-                      <h3 className="font-bold text-white line-clamp-1 pr-4">{project.title}</h3>
+                      <h3 className="font-bold text-foreground line-clamp-1 pr-4">{project.title}</h3>
                       <div className="flex items-center gap-3 mt-1">
                         <span className={cn(
                           "text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md",
@@ -111,11 +111,11 @@ export default function HistoryPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" />
                     {new Date(project.created_at).toLocaleDateString()}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <ClockIcon className="h-3.5 w-3.5" />
                     {Math.round(project.duration_seconds || 0)}s Duration
                   </div>
@@ -124,7 +124,7 @@ export default function HistoryPage() {
                 <div className="mt-auto flex items-center gap-3">
                   <button 
                     onClick={() => router.push(`/clipmaster/dashboard/${project.id}`)}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-zinc-900 border border-[#2a2a2a] py-3 text-sm font-bold text-white transition-all hover:bg-zinc-800 hover:border-zinc-700"
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground py-3 text-sm font-bold transition-all hover:opacity-90 shadow-md shadow-primary/10"
                   >
                     <ExternalLink className="h-4 w-4" />
                     Open Dashboard
@@ -134,7 +134,7 @@ export default function HistoryPage() {
                       e.stopPropagation();
                       setProjectToDelete(project.id);
                     }}
-                    className="rounded-xl border border-[#2a2a2a] bg-zinc-900 p-3 text-zinc-500 transition-all hover:text-red-500 hover:bg-red-500/5 hover:border-red-500/20"
+                    className="rounded-xl border border-border bg-secondary p-3 text-muted-foreground transition-all hover:text-destructive hover:bg-destructive/5 hover:border-destructive/20"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

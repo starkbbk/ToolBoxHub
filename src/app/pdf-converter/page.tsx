@@ -111,15 +111,15 @@ export default function PDFConverterPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-zinc-950 overflow-hidden relative">
+    <div className="flex h-[calc(100vh-64px)] bg-background overflow-hidden relative">
       {/* Dynamic Sidebar - Responsive */}
       <div className={cn(
-        "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity duration-300",
+        "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity duration-300",
         isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
       )} onClick={() => setIsSidebarOpen(false)} />
       
       <div className={cn(
-        "absolute lg:relative z-50 h-full transition-transform duration-300 transform lg:translate-x-0 w-72 shrink-0",
+        "absolute lg:relative z-50 h-full transition-transform duration-300 transform lg:translate-x-0 w-72 shrink-0 border-r border-border",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <ToolSidebar 
@@ -129,42 +129,42 @@ export default function PDFConverterPage() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative">
+      <div className="flex-1 flex flex-col min-w-0 bg-background/50 relative">
         {/* Context Header */}
         {activeTool && (
-          <div className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-white/5 bg-zinc-950/50 backdrop-blur-md sticky top-0 z-20">
+          <div className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-20">
             <div className="flex items-center gap-2 md:gap-4">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden p-2 -ml-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                className="lg:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-all"
               >
                 <ChevronLeft className={cn("h-5 w-5 transition-transform", isSidebarOpen ? "rotate-180" : "")} />
               </button>
               <button 
                 onClick={() => setActiveToolId(null)}
-                className="p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-all"
                 title="Back to Dashboard"
               >
                 <Home className="h-5 w-5" />
               </button>
-              <div className="h-4 w-px bg-white/10 hidden md:block" />
+              <div className="h-4 w-px bg-border hidden md:block" />
               <div className="flex items-center gap-3 overflow-hidden">
-                {activeTool.icon && <activeTool.icon className="h-5 w-5 text-indigo-400 shrink-0" />}
-                <h2 className="font-bold text-white truncate text-sm md:text-base">{activeTool.label}</h2>
+                {activeTool.icon && <activeTool.icon className="h-5 w-5 text-primary shrink-0" />}
+                <h2 className="font-bold text-foreground truncate text-sm md:text-base">{activeTool.label}</h2>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden px-3 py-1.5 bg-indigo-600/10 border border-indigo-500/20 rounded-lg text-indigo-400 text-[10px] font-black uppercase tracking-widest"
+                className="lg:hidden px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg text-primary text-[10px] font-black uppercase tracking-widest"
               >
                 Tools
               </button>
               {activeTool.isBackend && (
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-                  <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">AI Enhanced</span>
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">AI Enhanced</span>
                 </div>
               )}
             </div>

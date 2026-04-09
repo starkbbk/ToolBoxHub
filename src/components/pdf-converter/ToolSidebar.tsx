@@ -32,17 +32,17 @@ export default function ToolSidebar({ activeToolId, onSelectTool }: ToolSidebarP
   }, [search]);
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 border-r border-white/5 w-72 shrink-0 overflow-hidden">
+    <div className="flex flex-col h-full bg-card border-r border-border w-72 shrink-0 overflow-hidden">
       {/* Search Bar */}
-      <div className="p-4 border-b border-white/5">
+      <div className="p-4 border-b border-border">
         <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-indigo-400 transition-colors" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <input
             type="text"
             placeholder="Search tools..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all font-medium"
+            className="w-full bg-secondary border border-border rounded-xl pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
           />
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function ToolSidebar({ activeToolId, onSelectTool }: ToolSidebarP
             <div key={category.id} className="space-y-1">
               <button
                 onClick={() => toggleCategory(category.id)}
-                className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-zinc-500 uppercase tracking-wider hover:text-zinc-300 transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
               >
                 {category.label}
                 {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
@@ -78,16 +78,16 @@ export default function ToolSidebar({ activeToolId, onSelectTool }: ToolSidebarP
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative",
                           isActive 
-                            ? "bg-indigo-500/10 text-indigo-400" 
-                            : "text-zinc-400 hover:text-white hover:bg-white/5"
+                            ? "bg-primary/10 text-primary" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                         )}
                       >
                         {isActive && (
-                          <div className="absolute left-0 w-1 h-6 bg-indigo-500 rounded-r-full" />
+                          <div className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />
                         )}
                         <Icon className={cn(
                           "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
-                          isActive ? "text-indigo-400" : "text-zinc-500 group-hover:text-zinc-300"
+                          isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                         )} />
                         <div className="flex flex-col items-start overflow-hidden">
                           <span className="text-sm font-semibold truncate w-full">{tool.label}</span>
