@@ -193,18 +193,18 @@ export default function PricingPage() {
             )}
           >
             {plan.badge && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-violet-500 text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-full border border-white/20 shadow-xl text-white">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-violet-500 text-[10px] font-black uppercase tracking-widest px-6 py-1.5 rounded-full border border-white/20 shadow-2xl text-white whitespace-nowrap z-10">
                 {plan.badge}
               </div>
             )}
 
-            <div className="flex items-center gap-3 mb-6">
-              <div className={cn("p-3 rounded-2xl", plan.highlight ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary")}>
+            <div className="flex items-start gap-4 mb-8">
+              <div className={cn("p-3 rounded-2xl shrink-0", plan.highlight ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary")}>
                 <plan.icon className="h-6 w-6" />
               </div>
-              <div>
-                <h2 className="text-xl font-black tracking-tight">{plan.name}</h2>
-                <p className="text-xs text-muted-foreground font-medium">{plan.description}</p>
+              <div className="pt-1">
+                <h2 className="text-xl font-black tracking-tight leading-tight mb-1">{plan.name}</h2>
+                <p className="text-xs text-muted-foreground font-medium leading-relaxed">{plan.description}</p>
               </div>
             </div>
 
