@@ -83,11 +83,11 @@ export default function ProfilePage() {
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
               <span className={cn(
                 "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
-                user?.subscription_plan === 'free' 
+                (user?.subscription_plan?.toLowerCase() === 'free' || !user?.subscription_plan)
                   ? "bg-secondary text-muted-foreground border-border" 
                   : "bg-primary/10 border-primary/50 text-primary"
               )}>
-                {user?.subscription_plan} Plan
+                {user?.subscription_plan?.replace(/\s*plan\s*/gi, '') || 'FREE'} PLAN
               </span>
               <span className={cn(
                 "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
@@ -136,21 +136,29 @@ export default function ProfilePage() {
                     { label: 'PDF Conversions', count: user?.usage?.pdf_conversions || 0, limit: 5 },
                     { label: 'Text Removals', count: user?.usage?.text_removals || 0, limit: 3 },
                     { label: 'Compressions', count: user?.usage?.image_compressions || 0, limit: 5 },
-                  ].map((stat, i) => (
-                    <div key={i} className="p-6 rounded-3xl bg-card border border-border shadow-sm">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{stat.label}</p>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black">{stat.count}</span>
-                        <span className="text-muted-foreground text-sm">/ {user?.subscription_plan === 'free' ? stat.limit : '∞'}</span>
+                  ].map((stat, i) => {
+                    const isFree = user?.subscription_plan?.toLowerCase() === 'free' || !user?.subscription_plan;
+                    const percentage = isFree ? Math.min((stat.count / stat.limit) * 100, 100) : 100;
+                    
+                    return (
+                      <div key={i} className="p-6 rounded-3xl bg-card border border-border shadow-sm">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{stat.label}</p>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-black">{stat.count}</span>
+                          <span className="text-muted-foreground text-sm">/ {isFree ? stat.limit : '∞'}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-secondary rounded-full mt-4 overflow-hidden">
+                          <div 
+                            className={cn(
+                              "h-full transition-all duration-500",
+                              isFree ? "bg-primary" : "bg-gradient-to-r from-indigo-500 to-violet-500"
+                            )} 
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="h-1.5 w-full bg-secondary rounded-full mt-4 overflow-hidden">
-                        <div 
-                          className="h-full bg-primary" 
-                          style={{ width: user?.subscription_plan === 'free' ? `${(stat.count / stat.limit) * 100}%` : '20%' }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="p-8 rounded-3xl bg-card border border-border shadow-sm">
@@ -174,8 +182,8 @@ export default function ProfilePage() {
                   <div className="flex justify-between items-start mb-8">
                     <div>
                       <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
-                        {user?.subscription_plan?.toUpperCase() || 'FREE'}
-                        {user?.subscription_plan && user?.subscription_plan !== 'free' && (
+                        {user?.subscription_plan?.replace(/\s*plan\s*/gi, '').toUpperCase() || 'FREE'}
+                        {user?.subscription_plan && user?.subscription_plan?.toLowerCase() !== 'free' && (
                           <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] uppercase tracking-widest border border-green-500/20">
                             Active
                           </span>

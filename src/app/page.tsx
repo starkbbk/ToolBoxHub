@@ -24,7 +24,7 @@ export default function Home() {
             ToolboxHub
           </span>
         </h1>
-        <p className="max-w-xl mx-auto text-zinc-400 text-lg sm:text-xl font-medium tracking-tight">
+        <p className="max-w-xl mx-auto text-muted-foreground text-lg sm:text-xl font-medium tracking-tight">
           Next-generation AI utility suite for digital creators.
         </p>
         

@@ -21,10 +21,6 @@ async def check_usage_limit(tool_key: str, email: str = Depends(get_current_user
     plan = user.get("subscription_plan", PlanType.FREE)
     status = user.get("subscription_status", SubscriptionStatus.NONE)
     
-    # Pro and Enterprise have unlimited access
-    if plan in [PlanType.PRO, PlanType.ENTERPRISE] and status == SubscriptionStatus.ACTIVE:
-        return True
-    
     # Check if a new day has started to reset usage
     usage = user.get("usage", {})
     last_reset = usage.get("last_reset")
@@ -43,19 +39,32 @@ async def check_usage_limit(tool_key: str, email: str = Depends(get_current_user
         )
         usage = {"pdf_conversions": 0, "text_removals": 0, "image_compressions": 0}
     
+    # Increment usage FIRST (for all users)
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$inc": {f"usage.{tool_key}": 1}}
+    )
+    
+    # Paid tiers have unlimited access
+    unlimited_plans = [
+        PlanType.PRO, 
+        PlanType.ENTERPRISE, 
+        PlanType.BUSINESS, 
+        PlanType.CLAUDEMAX
+    ]
+    
+    if plan in unlimited_plans and status == SubscriptionStatus.ACTIVE:
+        return True
+    
+    # Enforce limit for free users or inactive/expired plans
     current_usage = usage.get(tool_key, 0)
     limit = FREE_LIMITS.get(tool_key, 0)
     
     if current_usage >= limit:
         raise HTTPException(
             status_code=403, 
-            detail=f"Daily limit reached for {tool_key.replace('_', ' ')}. Upgrade to Pro for unlimited access."
+            detail=f"Daily limit reached for {tool_key.replace('_', ' ')}. Upgrade to a paid plan for unlimited access."
         )
     
-    # Increment usage
-    await db.users.update_one(
-        {"_id": user["_id"]},
-        {"$inc": {f"usage.{tool_key}": 1}}
-    )
-    
     return True
+
