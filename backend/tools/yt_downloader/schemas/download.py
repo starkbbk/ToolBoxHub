@@ -20,7 +20,6 @@ class FormatInfo(BaseModel):
     is_available: bool = True
 
 class VideoInfo(BaseModel):
-    video_id: string = None # Wait, prompt says video_id: str, let's fix that
     video_id: str
     title: str
     channel: str
