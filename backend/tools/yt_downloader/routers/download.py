@@ -19,7 +19,7 @@ router = APIRouter()
 @router.post("/extract", response_model=None)
 async def extract(request: ExtractRequest):
     try:
-        data = extract_video_info(request.url)
+        data = await extract_video_info(request.url)
         return success_response(data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -32,7 +32,7 @@ async def start_download(
 ):
     try:
         # 1. Get info again to populate DB record
-        info = extract_video_info(request.url)
+        info = await extract_video_info(request.url)
         video_info = info["video_info"]
         
         # 2. Create DB record
