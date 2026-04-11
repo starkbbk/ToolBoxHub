@@ -11,6 +11,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { GOOGLE_CLIENT_ID } from "@/constants";
 
 import { ThemeProvider } from "@/context/ThemeProvider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,14 +31,16 @@ export default function RootLayout({
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || ""}>
           <AuthProvider>
             <ThemeProvider>
-              <ScrollbarControl />
-              <DynamicBackground />
-              <Navbar />
-              <main className="flex-1 container mx-auto px-4 pt-28 pb-10 relative z-10">
-                {children}
-              </main>
-              <Footer />
-              <Toaster position="top-right" richColors theme="dark" />
+              <TooltipProvider>
+                <ScrollbarControl />
+                <DynamicBackground />
+                <Navbar />
+                <main className="flex-1 container mx-auto px-4 pt-28 pb-10 relative z-10">
+                  {children}
+                </main>
+                <Footer />
+                <Toaster position="top-right" richColors theme="dark" />
+              </TooltipProvider>
             </ThemeProvider>
           </AuthProvider>
         </GoogleOAuthProvider>
