@@ -1,4 +1,4 @@
-import { Video, FileText, Image, Mic, AlignLeft, Eraser } from "lucide-react";
+import { Video, FileText, Image, Mic, AlignLeft, Eraser, Download } from "lucide-react";
 import { ReactNode } from "react";
 
 export interface Tool {
@@ -20,6 +20,15 @@ export const TOOLS: Tool[] = [
     route: "/clipmaster",
     status: "active",
     glowColor: "rgba(99, 102, 241, 0.4)",
+  },
+  {
+    id: "yt-downloader",
+    name: "YT Downloader",
+    description: "Download YouTube videos in 4K, 1080p, or audio-only",
+    icon: Download,
+    route: "/yt-downloader",
+    status: "active",
+    glowColor: "rgba(239, 68, 68, 0.4)",
   },
   {
     id: "pdf-converter",

@@ -11,7 +11,9 @@ from shared.response import success_response
 
 # Import tools routers
 from tools.clipmaster.routers import router as clipmaster_router
-from tools.clipmaster.services.progress_manager import progress_manager
+from tools.clipmaster.services.progress_manager import progress_manager as clipmaster_progress_manager
+from tools.yt_downloader.routers import router as yt_downloader_router
+from tools.yt_downloader.services.progress_manager import progress_manager as yt_downloader_progress_manager
 from tools.pdf_converter.routers import router as pdf_converter_router
 from tools.image_compressor.routers.placeholder import router as image_compressor_router
 from tools.audio_transcriber.routers import router as audio_transcriber_router
@@ -26,6 +28,14 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.join(settings.upload_dir, "pdf_converter"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "image_compressor"), exist_ok=True)
     os.makedirs(os.path.join(settings.upload_dir, "text_remover"), exist_ok=True)
+    os.makedirs(os.path.join(settings.upload_dir, "yt_downloader"), exist_ok=True)
+    
+    # Create database tables for legacy tools
+    from database import engine
+    from models.base import Base
+    # Ensure all models are imported before calling create_all
+    from tools.yt_downloader.models.download import YTDownload
+    Base.metadata.create_all(bind=engine)
     
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / 1024 / 1024
@@ -57,6 +67,7 @@ from routers.subscription import router as subscription_router
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(subscription_router, prefix="/api/subscription", tags=["subscription"])
 app.include_router(clipmaster_router, prefix="/api/clipmaster")
+app.include_router(yt_downloader_router, prefix="/api/yt-downloader")
 app.include_router(pdf_converter_router, prefix="/api/pdf-converter")
 app.include_router(image_compressor_router, prefix="/api/image-compressor")
 app.include_router(audio_transcriber_router, prefix="/api/audio-transcriber")
@@ -67,17 +78,34 @@ app.include_router(text_remover_router, prefix="/api/text-remover")
 def health_check():
     process = psutil.Process(os.getpid())
     mem_mb = process.memory_info().rss / 1024 / 1024
-    return success_response({"status": "ok", "memory_usage_mb": round(mem_mb, 2)})
+    return success_response({
+        "status": "ok", 
+        "memory_usage_mb": round(mem_mb, 2),
+        "tool_count": 7
+    })
 
 @app.get("/api/tools")
 def get_tools():
-    return success_response([{"id": "clipmaster", "status": "active"}, {"id": "text-remover", "status": "active"}])
+    return success_response([
+        {"id": "clipmaster", "status": "active"}, 
+        {"id": "yt-downloader", "status": "active"},
+        {"id": "text-remover", "status": "active"}
+    ])
 
 @app.websocket("/ws/clipmaster/progress/{project_id}")
-async def websocket_progress(websocket: WebSocket, project_id: int):
-    await progress_manager.connect(project_id, websocket)
+async def websocket_clipmaster_progress(websocket: WebSocket, project_id: int):
+    await clipmaster_progress_manager.connect(project_id, websocket)
     try:
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
-        progress_manager.disconnect(project_id, websocket)
+        clipmaster_progress_manager.disconnect(project_id, websocket)
+
+@app.websocket("/ws/yt-downloader/progress/{download_id}")
+async def websocket_yt_downloader_progress(websocket: WebSocket, download_id: int):
+    await yt_downloader_progress_manager.connect(download_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        yt_downloader_progress_manager.disconnect(download_id, websocket)

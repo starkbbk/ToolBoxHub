@@ -76,5 +76,53 @@ export interface WSMessage {
   step: string;
   progress: number;
   message: string;
+  speed?: string;
+  eta?: string;
   timestamp: string;
+}
+
+export interface VideoInfo {
+  video_id: string;
+  title: string;
+  channel: string;
+  thumbnail_url: string;
+  duration_seconds: number;
+  duration_formatted: string;
+  view_count: number;
+  upload_date: string;
+  description: string;
+}
+
+export interface FormatInfo {
+  format_id: string;
+  quality_label: string;
+  extension: string;
+  fps: number | null;
+  file_size_bytes: number | null;
+  file_size_display: string;
+  video_codec: string | null;
+  audio_codec: string | null;
+  has_video: boolean;
+  has_audio: boolean;
+  needs_merge: boolean;
+  is_available: boolean;
+}
+
+export interface DownloadRecord {
+  id: number;
+  video_id: string;
+  title: string;
+  channel: string | null;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  source_url: string;
+  selected_quality: string;
+  file_size_bytes: number | null;
+  file_size_display: string;
+  file_extension: string;
+  status: "extracting" | "downloading" | "merging" | "completed" | "failed";
+  progress_percent: number;
+  error_message: string | null;
+  created_at: string;
+  completed_at: string | null;
 }

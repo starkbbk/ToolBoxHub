@@ -93,4 +93,20 @@ export const subscription = {
   sync: () => api.get('/api/subscription/sync'),
 };
 
+export const ytDownloader = {
+  extractInfo: (url: string) => api.post('/api/yt-downloader/extract', { url }),
+  startDownload: (url: string, formatId: string, qualityLabel: string) => 
+    api.post('/api/yt-downloader/download', { url, format_id: formatId, quality_label: qualityLabel }),
+  getDownloadStatus: (downloadId: number) => 
+    api.get(`/api/yt-downloader/download/${downloadId}/status`),
+  getDownloadHistory: (params?: any) => 
+    api.get('/api/yt-downloader/history', { params }),
+  deleteDownload: (downloadId: number) => 
+    api.delete(`/api/yt-downloader/download/${downloadId}`),
+  clearHistory: () => 
+    api.delete('/api/yt-downloader/history/clear'),
+  getDownloadFileUrl: (downloadId: number) => 
+    `${API_URL}/api/yt-downloader/download/${downloadId}/file`,
+};
+
 export default api;
