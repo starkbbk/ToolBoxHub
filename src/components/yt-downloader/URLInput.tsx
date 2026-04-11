@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Youtube, Clipboard, Search, CheckCircle2, XCircle } from 'lucide-react';
+import { Video, Clipboard, Search, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -48,7 +48,7 @@ export default function URLInput({ onExtract, isLoading }: URLInputProps) {
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="relative group">
         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-red-500 transition-colors">
-          <Youtube className="h-5 w-5" />
+          <Video className="h-5 w-5" />
         </div>
         
         <Input
