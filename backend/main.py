@@ -31,11 +31,23 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.join(settings.upload_dir, "yt_downloader"), exist_ok=True)
     
     # Create database tables for legacy tools
+    import time
     from database import engine
     from models.base import Base
-    # Ensure all models are imported before calling create_all
     from tools.yt_downloader.models.download import YTDownload
-    Base.metadata.create_all(bind=engine)
+    
+    max_retries = 3
+    for i in range(max_retries):
+        try:
+            Base.metadata.create_all(bind=engine)
+            logging.info("DATABASE TABLES INITIALIZED")
+            break
+        except Exception as e:
+            if i == max_retries - 1:
+                logging.error(f"DATABASE INITIALIZATION FAILED: {str(e)}")
+            else:
+                logging.warning(f"Database locked, retrying {i+1}/{max_retries}...")
+                time.sleep(1)
     
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / 1024 / 1024
