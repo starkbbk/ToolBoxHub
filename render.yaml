@@ -2,22 +2,14 @@ services:
   - type: web
     name: toolbox-hub-backend
     env: python
-    buildCommand: "cd backend && pip install -r requirements.txt"
-    startCommand: "cd backend && gunicorn main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --max-requests 200 --max-requests-jitter 50"
+    buildCommand: "cd backend && chmod +x render-build.sh && ./render-build.sh"
+    startCommand: "cd backend && export PATH=$PATH:$(pwd)/ffmpeg && gunicorn main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --max-requests 200 --max-requests-jitter 50"
     envVars:
       - key: DATABASE_URL
         value: "sqlite:///./toolbox_hub.db"
       - key: CORS_ORIGINS
-        value: "https://toolbox-hub.vercel.app" # Placeholder: Update with your Vercel URL
+        value: "https://tool-box-hub-pi.vercel.app"
       - key: UPLOAD_DIR
         value: "./uploads"
       - key: APP_NAME
         value: "ToolboxHub"
-
-    buildCommand: "npm install && npm run build"
-    startCommand: "npm run start"
-    envVars:
-      - key: NEXT_PUBLIC_API_URL
-        value: "https://toolbox-hub-backend.onrender.com" # Placeholder: Update with your Render URL
-      - key: NEXT_PUBLIC_WS_URL
-        value: "wss://toolbox-hub-backend.onrender.com"
