@@ -14,11 +14,8 @@ services:
       - key: APP_NAME
         value: "ToolboxHub"
 
-  - type: web
-    name: toolbox-hub-frontend
-    env: node
-    buildCommand: "cd frontend && npm install && npm run build"
-    startCommand: "cd frontend && npm run start"
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm run start"
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: "https://toolbox-hub-backend.onrender.com" # Placeholder: Update with your Render URL

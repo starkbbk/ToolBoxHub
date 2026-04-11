@@ -83,7 +83,7 @@ const plans = [
     highlight: false,
   },
   {
-    name: 'Claude Max Plan',
+    name: 'God Mode',
     price: { monthly: 299.00, yearly: 2990 },
     description: 'The ultimate powerhouse',
     icon: Crown,
@@ -186,7 +186,7 @@ export default function PricingPage() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className={cn(
-              "relative rounded-3xl p-8 border transition-all duration-500 hover:translate-y-[-8px] glass-card",
+              "relative rounded-3xl p-8 border transition-all duration-500 hover:translate-y-[-8px] glass-card !overflow-visible",
               plan.highlight 
                 ? "bg-primary/10 border-primary shadow-2xl shadow-primary/10" 
                 : "bg-secondary/30 border-border hover:border-primary/30"

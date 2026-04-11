@@ -19,10 +19,12 @@ STRIPE_PLAN_IDS = {
     "pro_monthly": settings.stripe_pro_monthly_id,
     "enterprise_monthly": settings.stripe_ent_monthly_id,
     "business_monthly": settings.stripe_bus_monthly_id,
+    "godmode_monthly": settings.stripe_cla_monthly_id,
     "claudemax_monthly": settings.stripe_cla_monthly_id,
     "pro_yearly": settings.stripe_pro_yearly_id,
     "enterprise_yearly": settings.stripe_ent_yearly_id,
     "business_yearly": settings.stripe_bus_yearly_id,
+    "godmode_yearly": settings.stripe_cla_yearly_id,
     "claudemax_yearly": settings.stripe_cla_yearly_id,
 }
 
@@ -32,8 +34,8 @@ def get_plan_from_price_id(price_id: str) -> str:
         if val == price_id:
             # key is like "pro_monthly"
             plan_base = key.split('_')[0]
-            if plan_base == "claudemax":
-                return "claude max plan"
+            if plan_base in ["claudemax", "godmode"]:
+                return "god mode"
             return plan_base
     return "free"
 
@@ -103,8 +105,8 @@ async def stripe_webhook(request: Request, db: AsyncIOMotorDatabase = Depends(ge
 def normalize_plan_name(plan: str) -> str:
     """Normalize Stripe metadata plan string to internal PlanType enum value."""
     p = plan.lower()
-    if "max" in p or "claude" in p:
-        return "claude max plan"
+    if "max" in p or "claude" in p or "god" in p:
+        return "god mode"
     if "business" in p:
         return "business"
     if "enterprise" in p:
