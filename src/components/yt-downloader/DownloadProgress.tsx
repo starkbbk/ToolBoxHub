@@ -38,11 +38,10 @@ export default function DownloadProgress({ downloadId, onReset }: DownloadProgre
     };
   }, [downloadId, updateProgress]);
 
-  if (!downloadProgress) return null;
-
-  const isCompleted = downloadProgress.step === 'completed';
-  const isFailed = downloadProgress.step === 'failed';
-  const progress = downloadProgress.progress || 0;
+  const isCompleted = downloadProgress?.step === 'completed';
+  const isFailed = downloadProgress?.step === 'failed';
+  const progress = downloadProgress?.progress || 0;
+  const message = downloadProgress?.message || "Initializing secure connection...";
 
   const handleSave = () => {
     const url = ytDownloader.getDownloadFileUrl(downloadId);
@@ -61,18 +60,22 @@ export default function DownloadProgress({ downloadId, onReset }: DownloadProgre
            isFailed ? <AlertCircle className="h-6 w-6" /> : <Download className="h-6 w-6 animate-bounce" />}
         </div>
         <div>
-          <h3 className="text-xl font-black text-white leading-tight uppercase tracking-tighter">
-            {isCompleted ? "Download Ready!" : isFailed ? "Download Failed" : `Downloading "${videoInfo?.title}"`}
+          <h3 className="text-xl font-black text-foreground leading-tight uppercase tracking-tighter">
+            {isCompleted ? 
+             (downloadProgress?.message?.includes("Optimized") ? "Download Optimized!" : "Download Ready!") : 
+             isFailed ? "Download Failed" : 
+             (message.includes("Optimized") || message.includes("Safe Mode")) ? "Optimizing Quality..." :
+             videoInfo ? `Downloading "${videoInfo.title}"` : "Preparing Download..."}
           </h3>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
-            {downloadProgress.message}
+            {message}
           </p>
         </div>
       </div>
 
       {!isFailed && (
         <div className="space-y-6">
-          <div className="relative h-4 w-full bg-secondary/30 rounded-full overflow-hidden border border-white/5">
+          <div className="relative h-4 w-full bg-secondary/30 rounded-full overflow-hidden border border-border">
             <div 
               className={cn(
                 "absolute inset-y-0 left-0 transition-all duration-500 ease-out",
@@ -85,15 +88,15 @@ export default function DownloadProgress({ downloadId, onReset }: DownloadProgre
           </div>
 
           <div className="flex flex-wrap justify-between gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 border border-white/5">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 border border-border">
               <Zap className="h-3 w-3 text-yellow-500" />
-              <span>Speed: {downloadProgress.speed || '---'}</span>
+              <span>Speed: {downloadProgress?.speed || '---'}</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 border border-white/5">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 border border-border">
               <Timer className="h-3 w-3 text-blue-500" />
-              <span>ETA: {downloadProgress.eta || '---'}</span>
+              <span>ETA: {downloadProgress?.eta || '---'}</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 border border-white/5">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 border border-border">
               <Package className="h-3 w-3 text-indigo-500" />
               <span>Progress: {progress.toFixed(0)}%</span>
             </div>
@@ -114,7 +117,7 @@ export default function DownloadProgress({ downloadId, onReset }: DownloadProgre
             <Button
               onClick={onReset}
               variant="outline"
-              className="h-14 rounded-2xl border-white/10 hover:bg-secondary font-bold uppercase tracking-wider"
+              className="h-14 rounded-2xl border-border hover:bg-secondary font-bold uppercase tracking-wider"
             >
               <RotateCcw className="mr-2 h-5 w-5" />
               Download Another

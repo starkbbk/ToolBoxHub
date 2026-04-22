@@ -93,15 +93,15 @@ export default function PDFConverterPage() {
               <activeTool.icon className="h-12 w-12 md:h-16 md:w-16" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl md:text-3xl font-bold text-white">{activeTool.label}</h2>
-              <p className="text-zinc-500 max-w-md mx-auto text-sm">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">{activeTool.label}</h2>
+              <p className="text-muted-foreground max-w-md mx-auto text-sm">
                 This tool is currently being optimized for high-performance browser execution. 
                 Full activation coming soon!
               </p>
             </div>
             <button 
               onClick={() => setActiveToolId(null)}
-              className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-bold transition-all text-sm"
+              className="px-8 py-3 bg-secondary hover:bg-secondary/80 text-foreground border border-border rounded-2xl font-bold transition-all text-sm"
             >
               Back to Dashboard
             </button>

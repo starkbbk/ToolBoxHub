@@ -69,7 +69,7 @@ const footerLinks = [
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-[#050505] pt-24 pb-16 text-[#D1D1D1]">
+    <footer className="w-full bg-secondary/30 pt-24 pb-16 text-muted-foreground border-t border-border">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
         <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
           
@@ -79,7 +79,7 @@ export default function Footer() {
               <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-110 transition-transform">
                 <Box className="h-6 w-6" />
               </div>
-              <span className="text-2xl font-black tracking-tighter text-white">ToolboxHub</span>
+              <span className="text-2xl font-black tracking-tighter text-foreground">ToolboxHub</span>
             </Link>
           </div>
 
@@ -87,13 +87,13 @@ export default function Footer() {
           <div className="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-12 lg:gap-8">
             {footerLinks.map((section, idx) => (
               <div key={idx} className="flex flex-col gap-6">
-                <h3 className="text-sm font-bold text-white tracking-wide uppercase opacity-90">{section.title}</h3>
+                <h3 className="text-sm font-bold text-foreground tracking-wide uppercase opacity-90">{section.title}</h3>
                 <ul className="flex flex-col gap-3">
                   {section.links.map((link, lIdx) => (
                     <li key={lIdx}>
                       <Link 
                         href={link.href}
-                        className="text-sm font-medium hover:text-white transition-colors duration-200"
+                        className="text-sm font-medium hover:text-foreground transition-colors duration-200"
                       >
                         {link.label}
                       </Link>
@@ -106,12 +106,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-40">
+        <div className="mt-24 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-60">
           <p>© {new Date().getFullYear()} ToolboxHub. All rights reserved.</p>
           <div className="flex gap-8">
-            <Link href="#" className="hover:text-white transition-colors">Twitter</Link>
-            <Link href="#" className="hover:text-white transition-colors">GitHub</Link>
-            <Link href="#" className="hover:text-white transition-colors">LinkedIn</Link>
+            <Link href="#" className="hover:text-foreground transition-colors">Twitter</Link>
+            <Link href="#" className="hover:text-foreground transition-colors">GitHub</Link>
+            <Link href="#" className="hover:text-foreground transition-colors">LinkedIn</Link>
           </div>
         </div>
       </div>
