@@ -132,7 +132,7 @@ export default function ImageCompressorPage() {
           ) : results.length > 0 ? (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                   Compressed Results ({results.length})
                 </h3>
@@ -141,7 +141,7 @@ export default function ImageCompressorPage() {
                     results.forEach(r => URL.revokeObjectURL(r.preview));
                     setResults([]);
                   }}
-                  className="text-sm text-zinc-500 hover:text-rose-400 transition-colors"
+                  className="text-sm text-muted-foreground hover:text-rose-400 transition-colors"
                 >
                   Start over
                 </button>
@@ -155,17 +155,17 @@ export default function ImageCompressorPage() {
                       key={img.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="group flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-3xl border border-white/5 bg-zinc-900/40 p-4 hover:bg-zinc-900/60 transition-all backdrop-blur-sm"
+                      className="group flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-3xl border border-border bg-card/40 p-4 hover:bg-card/60 transition-all backdrop-blur-sm"
                     >
-                      <div className="h-20 w-20 rounded-2xl overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
+                      <div className="h-20 w-20 rounded-2xl overflow-hidden bg-secondary shrink-0 border border-border">
                         <img src={img.preview} alt="Compressed" className="h-full w-full object-cover" />
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-white truncate">{img.originalName}</p>
+                        <p className="font-bold text-foreground truncate">{img.originalName}</p>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-zinc-500 text-sm line-through">{formatSize(img.originalSize)}</span>
-                          <ChevronRight className="h-3 w-3 text-zinc-600" />
+                          <span className="text-muted-foreground text-sm line-through">{formatSize(img.originalSize)}</span>
+                          <ChevronRight className="h-3 w-3 text-muted-foreground/40" />
                           <span className="text-emerald-400 text-sm font-bold">{formatSize(img.compressedSize)}</span>
                           {reduction > 0 && (
                             <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-black">
@@ -177,7 +177,7 @@ export default function ImageCompressorPage() {
 
                       <button 
                         onClick={() => saveAs(img.blob, `compressed_${img.originalName}`)}
-                        className="ml-auto p-3 bg-white/5 hover:bg-white/10 rounded-2xl text-white transition-all hover:scale-105 active:scale-95"
+                        className="ml-auto p-3 bg-secondary hover:bg-secondary/80 rounded-2xl text-foreground transition-all hover:scale-105 active:scale-95 border border-border"
                       >
                         <Download className="h-5 w-5" />
                       </button>
@@ -189,13 +189,13 @@ export default function ImageCompressorPage() {
           ) : (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <ImageIcon className="h-5 w-5 text-indigo-400" />
                   Selected Images ({files.length})
                 </h3>
                 <button 
                   onClick={() => setFiles([])}
-                  className="text-sm text-zinc-500 hover:text-rose-400 transition-colors"
+                  className="text-sm text-muted-foreground hover:text-rose-400 transition-colors"
                 >
                   Clear all
                 </button>
@@ -209,18 +209,18 @@ export default function ImageCompressorPage() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-zinc-900/40 p-4 hover:bg-zinc-900/60 transition-colors"
+                      className="group flex items-center gap-4 rounded-2xl border border-border bg-card/40 p-4 hover:bg-card/60 transition-colors"
                     >
                       <div className="rounded-xl bg-indigo-500/10 p-3 text-indigo-400">
                         <ImageIcon className="h-6 w-6" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white truncate">{file.name}</p>
-                        <p className="text-xs text-zinc-500">{formatSize(file.size)}</p>
+                        <p className="font-medium text-foreground truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
                       </div>
                       <button 
                         onClick={() => removeFile(index)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-500 hover:text-rose-400 rounded-xl transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-2 text-muted-foreground hover:text-rose-400 rounded-xl transition-all"
                       >
                         <X className="h-5 w-5" />
                       </button>
@@ -243,9 +243,9 @@ export default function ImageCompressorPage() {
                   };
                   input.click();
                 }}
-                className="w-full py-6 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center gap-2 text-zinc-500 hover:text-white hover:border-white/10 hover:bg-white/5 transition-all group"
+                className="w-full py-6 border-2 border-dashed border-border rounded-3xl flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all group"
               >
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:scale-110 transition-transform">
                   <span className="text-xl">+</span>
                 </div>
                 <span className="font-medium">Add more images</span>
@@ -255,8 +255,8 @@ export default function ImageCompressorPage() {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="sticky top-24 rounded-3xl border border-white/10 bg-zinc-900/80 p-8 backdrop-blur-xl shadow-2xl space-y-8">
-            <h4 className="text-lg font-bold text-white flex items-center gap-2">
+          <div className="sticky top-24 rounded-3xl border border-border bg-card/80 p-8 backdrop-blur-xl shadow-2xl space-y-8">
+            <h4 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Settings2 className="h-5 w-5 text-indigo-400" />
               Compression Settings
             </h4>
@@ -264,8 +264,8 @@ export default function ImageCompressorPage() {
             <div className="space-y-6">
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-zinc-400">Quality</span>
-                  <span className="text-white font-bold">{Math.round(quality * 100)}%</span>
+                  <span className="text-muted-foreground">Quality</span>
+                  <span className="text-foreground font-bold">{Math.round(quality * 100)}%</span>
                 </div>
                 <input 
                   type="range" 
@@ -274,9 +274,9 @@ export default function ImageCompressorPage() {
                   step="0.05"
                   value={quality}
                   onChange={(e) => setQuality(parseFloat(e.target.value))}
-                  className="w-full accent-indigo-500 h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                  className="w-full accent-indigo-500 h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
                 />
-                <div className="flex justify-between text-[10px] text-zinc-600 uppercase font-black tracking-widest">
+                <div className="flex justify-between text-[10px] text-muted-foreground/50 uppercase font-black tracking-widest">
                   <span>Slight</span>
                   <span>Maximum</span>
                 </div>
@@ -284,13 +284,13 @@ export default function ImageCompressorPage() {
 
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-zinc-400">Max Resolution</span>
-                  <span className="text-white font-bold">{maxWidth}px</span>
+                  <span className="text-muted-foreground">Max Resolution</span>
+                  <span className="text-foreground font-bold">{maxWidth}px</span>
                 </div>
                 <select 
                   value={maxWidth}
                   onChange={(e) => setMaxWidth(parseInt(e.target.value))}
-                  className="w-full bg-zinc-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                 >
                   <option value={800}>Low Res (800px)</option>
                   <option value={1280}>HD (1280px)</option>
@@ -334,7 +334,7 @@ export default function ImageCompressorPage() {
                 </button>
               )}
 
-              <p className="text-[10px] text-zinc-500 text-center uppercase tracking-widest font-bold">
+              <p className="text-[10px] text-muted-foreground text-center uppercase tracking-widest font-bold">
                 Privacy Protected: Processing happens locally
               </p>
             </div>

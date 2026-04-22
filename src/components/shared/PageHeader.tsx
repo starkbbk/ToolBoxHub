@@ -12,10 +12,10 @@ export default function PageHeader({ icon, title, description }: PageHeaderProps
         <span className="text-4xl">
           {typeof icon === "string" ? icon : <Icon className="h-10 w-10 text-indigo-500" />}
         </span>
-        <h1 className="text-4xl font-bold text-white">{title}</h1>
+        <h1 className="text-4xl font-bold text-foreground">{title}</h1>
       </div>
       {description && (
-        <p className="text-zinc-400 text-lg">
+        <p className="text-muted-foreground text-lg">
           {description}
         </p>
       )}
