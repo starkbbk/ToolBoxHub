@@ -48,39 +48,38 @@ export default function DynamicBackground() {
   return (
     <div className={cn(
       "fixed inset-0 z-[-1] overflow-hidden transition-colors duration-700",
-      isDark ? "bg-[#020202]" : "bg-[#f5f8ff]"
+      "bg-background"
     )}>
-      {/* Layer 1: Animated Mesh Blobs */}
-      <div className={cn("absolute inset-0 transition-opacity duration-1000", isDark ? "opacity-30" : "opacity-60")}>
+      {/* Mesh Background for Light Mode */}
+      <div className="bg-mesh opacity-100" />
+      
+      {/* Layer 1: Animated Mesh Blobs (Enhanced) */}
+      <div className={cn("absolute inset-0 transition-opacity duration-1000", isDark ? "opacity-30" : "opacity-40")}>
         <div className={cn(
           "absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] animate-blob",
-          isDark ? "bg-indigo-900/40" : "bg-blue-400/30"
+          isDark ? "bg-indigo-900/40" : "bg-indigo-400/20"
         )} style={{ animationDelay: '0s' }} />
         <div className={cn(
           "absolute top-[20%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] animate-blob",
-          isDark ? "bg-purple-900/30" : "bg-indigo-300/30"
+          isDark ? "bg-purple-900/30" : "bg-rose-300/20"
         )} style={{ animationDelay: '-5s' }} />
         <div className={cn(
           "absolute bottom-[-10%] left-[10%] w-[55%] h-[55%] rounded-full blur-[120px] animate-blob",
-          isDark ? "bg-blue-900/30" : "bg-violet-300/30"
+          isDark ? "bg-blue-900/30" : "bg-violet-300/20"
         )} style={{ animationDelay: '-10s' }} />
-        <div className={cn(
-          "absolute bottom-[20%] right-[10%] w-[45%] h-[45%] rounded-full blur-[120px] animate-blob",
-          isDark ? "bg-violet-900/30" : "bg-sky-200/40"
-        )} style={{ animationDelay: '-15s' }} />
       </div>
 
-      {/* Layer 2: Sparkling Starfield with Parallax */}
+      {/* Layer 2: Sparkling Starfield (Subtle) */}
       <div 
         className="absolute inset-0 pointer-events-none"
-        style={{ transform: `translateY(${-scrollY * 0.5}px)` }}
+        style={{ transform: `translateY(${-scrollY * 0.2}px)` }}
       >
         {sparkles.map((star) => (
           <div
             key={star.id}
             className={cn(
               "absolute rounded-full animate-twinkle transition-colors duration-500",
-              isDark ? "bg-white opacity-20" : "bg-indigo-400 opacity-20"
+              isDark ? "bg-white opacity-20" : "bg-primary opacity-10"
             )}
             style={{
               top: star.top,
@@ -88,8 +87,8 @@ export default function DynamicBackground() {
               width: `${star.size}px`,
               height: `${star.size}px`,
               boxShadow: isDark 
-                ? `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.5)`
-                : `0 0 ${star.size * 2}px rgba(99, 102, 241, 0.3)`,
+                ? `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.3)`
+                : `0 0 ${star.size * 2}px var(--primary)`,
               '--twinkle-duration': `${star.duration}s`,
               animationDelay: `${star.delay}s`,
             } as any}
@@ -97,19 +96,18 @@ export default function DynamicBackground() {
         ))}
       </div>
 
-      {/* Layer 3: Interactive Spotlight */}
+      {/* Layer 3: Interactive Spotlight (Very Subtle) */}
       <div 
         ref={spotlightRef}
         className={cn(
-          "absolute top-0 left-0 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[10] transition-opacity duration-1000",
-          isDark ? "opacity-50" : "opacity-30"
+          "absolute top-0 left-0 w-[800px] h-[800px] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[10] transition-opacity duration-1000",
+          isDark ? "opacity-40" : "opacity-20"
         )}
         style={{
           background: isDark 
-            ? "radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%)"
-            : "radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0) 70%)",
-          mixBlendMode: isDark ? "screen" : "multiply",
-          filter: "blur(80px)",
+            ? "radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0) 70%)"
+            : "radial-gradient(circle, var(--primary) 0%, transparent 70%)",
+          filter: "blur(100px)",
         }}
       />
     </div>

@@ -63,7 +63,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-4">
           {/* Theme Switcher Tabs */}
-          <div className="hidden sm:flex items-center p-1 rounded-full bg-secondary/50 border border-border">
+          <div className="hidden sm:flex items-center p-1 rounded-full bg-secondary/80 border border-border/50 backdrop-blur-md">
             <button
               onClick={() => setTheme('light')}
               className={cn(
@@ -89,22 +89,20 @@ export default function Navbar() {
               <div className="relative">
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 p-1 pl-3 pr-2 rounded-full bg-background border border-border hover:bg-secondary transition-colors group shadow-sm"
+                  className="flex items-center gap-3 p-1 pl-4 pr-1 rounded-full bg-background/50 border border-border/50 hover:bg-secondary/80 transition-all group shadow-sm backdrop-blur-md"
                 >
-                   {user?.subscription_plan !== 'free' && (
-                    <Sparkles className="h-3 w-3 text-amber-400 fill-amber-400" />
-                  )}
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors hidden sm:block">
                     {user?.name ? user.name.split(' ')[0] : 'User'}
                   </span>
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-xs font-bold border border-white/20">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-xs font-bold border-2 border-background shadow-lg overflow-hidden shrink-0">
                     {user?.profile_picture ? (
-                      <img src={user.profile_picture} alt={user.name} className="h-full w-full rounded-full object-cover" />
+                      <img src={user.profile_picture} alt={user.name} className="h-full w-full object-cover" />
                     ) : (
-                      user?.name ? user.name.charAt(0).toUpperCase() : 'U'
+                      <span className="text-white">
+                        {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                      </span>
                     )}
                   </div>
-                  <ChevronDown className={cn("h-3 w-3 text-muted-foreground transition-transform", isDropdownOpen && "rotate-180")} />
                 </button>
 
                 <AnimatePresence>
