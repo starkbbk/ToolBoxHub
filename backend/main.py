@@ -1,4 +1,6 @@
 import os
+os.environ["PATH"] = os.environ.get("PATH", "") + ":/usr/local/bin:/opt/homebrew/bin"
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware

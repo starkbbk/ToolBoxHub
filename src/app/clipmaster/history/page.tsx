@@ -45,6 +45,7 @@ export default function HistoryPage() {
           icon="📂"
           title="Project History"
           description="Access and manage all your past video processing projects."
+          align="left"
         />
         
         <div className="relative w-full md:w-80">

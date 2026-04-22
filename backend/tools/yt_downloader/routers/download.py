@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 import os
 import shutil
@@ -55,7 +55,7 @@ async def start_download(
         output_dir = os.path.join(settings.upload_dir, "yt_downloader")
         background_tasks.add_task(
             download_video,
-            db, # This might be problematic with threads, but downloader handles it or we'll solve it
+            db, 
             download_record.id,
             request.url,
             request.format_id,
@@ -90,17 +90,14 @@ async def get_file(download_id: int, db: Session = Depends(get_db)):
     if not record.file_path or not os.path.exists(record.file_path):
         raise HTTPException(status_code=404, detail="File has been deleted from server")
 
-    def iterfile():
-        with open(record.file_path, mode="rb") as file_like:
-            yield from file_like
-
     filename = os.path.basename(record.file_path)
     content_type = "video/mp4" if record.selected_quality != "audio" else "audio/mpeg"
     
-    return StreamingResponse(
-        iterfile(), 
+    # FileResponse handles RFC 5987 (Unicode filenames in headers) correctly
+    return FileResponse(
+        path=record.file_path,
         media_type=content_type,
-        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""}
+        filename=filename
     )
 
 @router.get("/history", response_model=None)

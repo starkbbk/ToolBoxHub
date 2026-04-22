@@ -10,6 +10,7 @@ import { useDownloadStore } from '@/stores/useDownloadStore';
 import { Button } from '@/components/ui/button';
 import { Download, ChevronRight, Home } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from "@/lib/utils";
 
 export default function YTDownloaderPage() {
   const { 
@@ -71,65 +72,72 @@ export default function YTDownloaderPage() {
         <URLInput onExtract={extractInfo} isLoading={isExtracting} />
       )}
 
-      {/* Video Content */}
-      {videoInfo && !currentDownloadId && (
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <VideoInfoCard videoInfo={videoInfo} />
+      {/* Video Content & Initializing State */}
+      {(videoInfo && (!currentDownloadId || isDownloading)) && (
+        <div className={cn(
+          "animate-in fade-in slide-in-from-bottom-8 duration-700",
+          currentDownloadId ? "opacity-30 blur-[2px] pointer-events-none transition-all duration-1000" : ""
+        )}>
+          {!currentDownloadId && <VideoInfoCard videoInfo={videoInfo} />}
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div className="lg:col-span-2">
-              <QualitySelector 
-                formats={formats} 
-                selectedFormatId={selectedFormatId} 
-                onSelect={selectFormat} 
-              />
-            </div>
-            
-            <div className="lg:sticky lg:top-32 h-fit space-y-4">
-              <div className="glass-card p-6 rounded-3xl border border-white/5 bg-red-500/5">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Summary</h4>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-bold">Quality:</span>
-                    <span className="text-white font-black">{selectedFormat?.quality_label || '---'}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-bold">Size:</span>
-                    <span className="text-white font-black">{selectedFormat?.file_size_display || '---'}</span>
-                  </div>
-                  <div className="pt-4 border-t border-white/5">
-                    <Button
-                      onClick={handleDownload}
-                      disabled={isDownloading}
-                      className="w-full h-14 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold uppercase tracking-wider shadow-xl shadow-white/5"
-                    >
-                      {isDownloading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                          <span>Preparing...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Download className="h-5 w-5" />
-                          <span>Download Now</span>
-                        </div>
-                      )}
-                    </Button>
+          {!currentDownloadId && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-8">
+              <div className="lg:col-span-2">
+                <QualitySelector 
+                  formats={formats} 
+                  selectedFormatId={selectedFormatId} 
+                  onSelect={selectFormat} 
+                />
+              </div>
+              
+              <div className="lg:sticky lg:top-32 h-fit space-y-4">
+                <div className="glass-card p-6 rounded-3xl border border-white/5 bg-red-500/5">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Summary</h4>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground font-bold">Quality:</span>
+                      <span className="text-white font-black">{selectedFormat?.quality_label || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground font-bold">Size:</span>
+                      <span className="text-white font-black">{selectedFormat?.file_size_display || '---'}</span>
+                    </div>
+                    <div className="pt-4 border-t border-white/5">
+                      <Button
+                        onClick={handleDownload}
+                        disabled={isDownloading}
+                        className="w-full h-14 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold uppercase tracking-wider shadow-xl shadow-white/5"
+                      >
+                        {isDownloading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 w-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                            <span>Preparing...</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Download className="h-5 w-5" />
+                            <span>Download Now</span>
+                          </div>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
       {/* Progress View */}
       {currentDownloadId && (
-        <DownloadProgress downloadId={currentDownloadId} onReset={reset} />
+        <div className="animate-in slide-in-from-top-4 duration-500">
+          <DownloadProgress downloadId={currentDownloadId} onReset={reset} />
+        </div>
       )}
 
       {/* History */}
-      {!currentDownloadId && <DownloadHistory />}
+      {!currentDownloadId && !isDownloading && <DownloadHistory />}
     </div>
   );
 }

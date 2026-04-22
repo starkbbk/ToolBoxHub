@@ -2,11 +2,17 @@ interface PageHeaderProps {
   icon: any; // Support both strings and Lucide components
   title: string;
   description?: string;
+  align?: 'left' | 'center';
 }
 
-export default function PageHeader({ icon, title, description }: PageHeaderProps) {
+export default function PageHeader({ icon, title, description, align = 'center' }: PageHeaderProps) {
+  const isLeft = align === 'left';
+  
   return (
-    <div className="mb-12 flex flex-col items-center text-center animate-in fade-in slide-in-from-top-4 duration-1000">
+    <div className={cn(
+      "mb-12 flex flex-col animate-in fade-in slide-in-from-top-4 duration-1000",
+      isLeft ? "items-start text-left" : "items-center text-center"
+    )}>
       <div className="mb-6 relative">
         {/* Soft Glow Background */}
         <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
@@ -24,7 +30,10 @@ export default function PageHeader({ icon, title, description }: PageHeaderProps
       </h1>
       
       {description && (
-        <p className="max-w-2xl text-sm font-medium text-muted-foreground uppercase tracking-[0.2em] opacity-80">
+        <p className={cn(
+          "max-w-2xl text-sm font-medium text-muted-foreground uppercase tracking-[0.2em] opacity-80",
+          !isLeft && "mx-auto"
+        )}>
           {description}
         </p>
       )}
