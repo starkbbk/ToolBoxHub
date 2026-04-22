@@ -10,59 +10,59 @@
 
 @layer base {
   :root {
-    /* Bryzos-inspired Light Mode */
-    --background: oklch(0.96 0.01 260);
-    --foreground: oklch(0.2 0.02 260);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.2 0.02 260);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.2 0.02 260);
-    --primary: oklch(0.55 0.18 260);
-    --primary-foreground: oklch(0.98 0 0);
-    --secondary: oklch(0.92 0.02 260);
-    --secondary-foreground: oklch(0.3 0.05 260);
-    --muted: oklch(0.92 0.01 260);
-    --muted-foreground: oklch(0.5 0.02 260);
-    --accent: oklch(0.94 0.04 260);
-    --accent-foreground: oklch(0.2 0.05 260);
-    --destructive: oklch(0.5 0.2 25);
-    --border: oklch(0.88 0.02 260);
-    --input: oklch(0.88 0.02 260);
-    --ring: oklch(0.55 0.18 260);
-    --radius: 2rem;
+    /* Bryzos-inspired Light Mode - Precision Refined */
+    --background: #f8faff;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #4f46e5;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #475569;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f1f5f9;
+    --accent-foreground: #0f172a;
+    --destructive: #ef4444;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #4f46e5;
+    --radius: 1.5rem;
     
-    /* Theme Specific Glass Vars */
-    --glass-bg: rgba(255, 255, 255, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-shadow: rgba(0, 0, 0, 0.03);
-    --glass-navbar: rgba(255, 255, 255, 0.5);
+    /* Theme Specific Glass Vars - Ultra Soft */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-shadow: rgba(0, 0, 0, 0.05);
+    --glass-navbar: rgba(255, 255, 255, 0.8);
   }
 
   .dark {
-    --background: oklch(0.08 0 0);
-    --foreground: oklch(0.98 0 0);
-    --card: oklch(0.12 0 0);
-    --card-foreground: oklch(0.98 0 0);
-    --popover: oklch(0.12 0 0);
-    --popover-foreground: oklch(0.98 0 0);
-    --primary: oklch(0.65 0.2 260);
-    --primary-foreground: oklch(0.1 0 0);
-    --secondary: oklch(0.18 0.02 260);
-    --secondary-foreground: oklch(0.9 0.05 260);
-    --muted: oklch(0.18 0 0);
-    --muted-foreground: oklch(0.7 0 0);
-    --accent: oklch(0.22 0.08 260);
-    --accent-foreground: oklch(0.98 0 0);
-    --destructive: oklch(0.4 0.2 25);
-    --border: oklch(0.2 0 0);
-    --input: oklch(0.2 0 0);
-    --ring: oklch(0.65 0.2 260);
+    --background: #020617;
+    --foreground: #f8fafc;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+    --popover: #0f172a;
+    --popover-foreground: #f8fafc;
+    --primary: #6366f1;
+    --primary-foreground: #ffffff;
+    --secondary: #1e293b;
+    --secondary-foreground: #cbd5e1;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --accent: #1e293b;
+    --accent-foreground: #f8fafc;
+    --destructive: #7f1d1d;
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #6366f1;
 
-    /* Theme Specific Glass Vars */
-    --glass-bg: rgba(0, 0, 0, 0.3);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-shadow: rgba(0, 0, 0, 0.4);
-    --glass-navbar: rgba(5, 5, 5, 0.4);
+    /* Theme Specific Glass Vars - Deep & Moody */
+    --glass-bg: rgba(15, 23, 42, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-shadow: rgba(0, 0, 0, 0.5);
+    --glass-navbar: rgba(2, 6, 23, 0.7);
   }
 
   * {
