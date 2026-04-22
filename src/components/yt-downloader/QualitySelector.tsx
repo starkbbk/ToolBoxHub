@@ -43,7 +43,7 @@ export default function QualitySelector({ formats, selectedFormatId, onSelect }:
   return (
     <div className="mt-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-black uppercase tracking-tighter text-white">Select Quality</h3>
+        <h3 className="text-xl font-black uppercase tracking-tighter text-foreground">Select Quality</h3>
         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
           {formats.length} Formats Available
         </span>
@@ -62,8 +62,8 @@ export default function QualitySelector({ formats, selectedFormatId, onSelect }:
               className={cn(
                 "group relative flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 text-left overflow-hidden",
                 isSelected 
-                  ? "bg-secondary/50 border-white/20 shadow-xl shadow-black/20" 
-                  : "bg-secondary/10 border-white/5 hover:border-white/10 hover:bg-secondary/20",
+                  ? "bg-secondary border-primary/50 shadow-xl shadow-primary/5" 
+                  : "bg-secondary/10 border-border hover:border-primary/30 hover:bg-secondary/20",
                 !format.is_available && "opacity-40 cursor-not-allowed grayscale"
               )}
               disabled={!format.is_available}
@@ -77,8 +77,8 @@ export default function QualitySelector({ formats, selectedFormatId, onSelect }:
 
               {/* Icon */}
               <div className={cn(
-                "p-3 rounded-xl bg-secondary/50 text-white shadow-inner transition-transform group-hover:scale-110",
-                isSelected && "bg-white/10"
+                "p-3 rounded-xl bg-secondary text-foreground shadow-inner transition-transform group-hover:scale-110",
+                isSelected && "bg-primary/10 text-primary"
               )}>
                 {isAudio ? <Music className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
               </div>
@@ -86,7 +86,7 @@ export default function QualitySelector({ formats, selectedFormatId, onSelect }:
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-white text-sm">
+                  <span className="font-bold text-foreground text-sm">
                     {format.quality_label === 'audio' ? 'Audio Only (MP3/M4A)' : format.quality_label}
                   </span>
                   {is4K && (
@@ -100,7 +100,7 @@ export default function QualitySelector({ formats, selectedFormatId, onSelect }:
                         <TooltipTrigger>
                           <Info className="h-3 w-3 text-muted-foreground" />
                         </TooltipTrigger>
-                        <TooltipContent className="bg-popover border-border p-2 text-[10px] font-bold">
+                        <TooltipContent className="bg-popover border-border p-2 text-[10px] font-bold text-popover-foreground">
                           Video & Audio will be merged automatically
                         </TooltipContent>
                       </Tooltip>
@@ -124,8 +124,8 @@ export default function QualitySelector({ formats, selectedFormatId, onSelect }:
               <div className={cn(
                 "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all",
                 isSelected 
-                  ? "bg-white border-white text-black scale-100" 
-                  : "border-white/5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
+                  ? "bg-primary border-primary text-primary-foreground scale-100" 
+                  : "border-border opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
               )}>
                 <Check className="h-3.5 w-3.5" />
               </div>

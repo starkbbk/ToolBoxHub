@@ -60,7 +60,7 @@ export default function VideoInfoCard({ videoInfo }: VideoInfoCardProps) {
 
         {/* Info */}
         <div className="flex-1 py-2">
-          <h2 className="text-2xl font-black mb-4 leading-tight tracking-tight text-white line-clamp-2">
+          <h2 className="text-2xl font-black mb-4 leading-tight tracking-tight text-foreground line-clamp-2">
             {videoInfo.title}
           </h2>
           
